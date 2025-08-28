@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-green: #005A31;
+        --secondary-green: #4CAF50;
+        --accent-blue: #007bff;
+        --background-light: #f4f8f7;
+        --text-dark: #333;
+        --border-light: #ddd;
+        --warning-yellow: #ffc107;
+        --danger-red: #dc3545;
+      }
+
+      body { 
+        font-family: 'Sarabun', sans-serif; 
+        background-color: var(--background-light); 
+        color: var(--text-dark); 
+        margin: 0;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+      }
+      .container { 
+        width: 100%;
+        max-width: 700px; 
+        margin: 20px auto; 
+        background: white; 
+        padding: 25px; 
+        border-radius: 12px; 
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08); 
+        position: relative;
+        box-sizing: border-box;
+      }
+      .nav-button { 
+        position: absolute; 
+        top: 20px; 
+        right: 20px; 
+        background-color: #6c757d; 
+        color: white; 
+        padding: 8px 15px; 
+        text-decoration: none; 
+        border-radius: 5px; 
+        font-size: 0.9em; 
+        transition: background-color 0.3s; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .nav-button:hover {
+        background-color: #5a6268;
+      }
+      h2 { 
+        color: var(--primary-green); 
+        border-bottom: 3px solid var(--secondary-green); 
+        padding-bottom: 10px; 
+        font-size: 1.6em; 
+        margin-top: 0;
+      }
+      
+      .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .btn-group button { 
+        background-color: var(--secondary-green); 
+        color: white; 
+        padding: 12px 16px; 
+        border: none; 
+        cursor: pointer; 
+        border-radius: 8px; 
+        font-size: 1em; 
+        font-family: 'Sarabun', sans-serif;
+        transition: all 0.3s ease; 
+        flex-grow: 1; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      }
+      .btn-group button:hover { 
+        background-color: #45a049; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      }
+      .btn-group button.active { 
+        background-color: #00796b; 
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        transform: translateY(0);
+      }
+      
+      .sub-btn-group { 
+        padding-left: 15px; 
+        margin-top: 10px; 
+        border-left: 3px solid var(--secondary-green); 
+        display: none; /* Initially hidden */
+        flex-wrap: wrap; 
+        gap: 8px; 
+      }
+      .sub-btn-group button { 
+        background: #e8f5e9;
+        border: 1px solid var(--secondary-green);
+        color: var(--primary-green); 
+        font-weight: bold; 
+        font-size: 0.9em; 
+        padding: 10px 14px; 
+        flex-grow: 1;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Sarabun', sans-serif;
+        transition: all 0.3s ease;
+      }
+      .sub-btn-group button:hover {
+        background: #c8e6c9;
+      }
+      .sub-btn-group button.active { 
+        background: var(--primary-green);
+        color: white; 
+        border-color: var(--primary-green); 
+      }
+      
+      .input-group { 
+        display: none; /* Initially hidden */
+        margin-top: 20px; 
+        padding: 20px; 
+        border: 1px solid var(--border-light); 
+        border-radius: 8px; 
+        background-color: #fafcfa; 
+      }
+      label { 
+        display: block; 
+        margin-bottom: 8px; 
+        font-weight: bold; 
+        color: #555;
+      }
+      input[type="number"], input[type="date"], select { 
+        width: 100%; 
+        padding: 12px; 
+        margin-bottom: 10px; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-sizing: border-box; 
+        font-size: 1em; 
+        font-family: 'Sarabun', sans-serif;
+      }
+      .submit-btn { 
+        background-color: var(--accent-blue); 
+        color: white; 
+        padding: 14px 20px; 
+        border: none; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        width: 100%; 
+        font-size: 1.2em; 
+        margin-top: 20px; 
+        font-family: 'Sarabun', sans-serif;
+        transition: background-color 0.3s;
+      }
+      .submit-btn:hover {
+        background-color: #0069d9;
+      }
+      
+      /* Modal Styles */
+      .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;}
+      .modal-content { background-color: #fefefe; padding: 30px; border-radius: 10px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; }
+      .spinner { border: 8px solid #f3f3f3; border-top: 8px solid var(--secondary-green); border-radius: 50%; width: 60px; height: 60px; animation: spin 1.5s linear infinite; margin: 0 auto 20px auto; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      .modal-content h3 { color: var(--text-dark); margin-top: 0; }
+      .modal-close-btn { background-color: var(--secondary-green); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; margin-top: 15px; }
+      
+      /* --- Leaf Success Graphic Styles --- */
+      .co2-graphic { width: 120px; height: 100px; margin: 0 auto 15px auto; position: relative; }
+      .co2-graphic .co2-cloud { fill: #a0aec0; transition: all 0.5s ease-in-out; animation: fadeOutAndShrink 1s ease-in-out 0.5s forwards; }
+      .co2-graphic .leaf { fill: #48bb78; stroke: #2f855a; stroke-width: 2; transform-origin: 50% 100%; opacity: 0; animation: growIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s forwards; }
+      @keyframes fadeOutAndShrink { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.1); } }
+      @keyframes growIn { 0% { opacity: 0; transform: scale(0.2); } 100% { opacity: 1; transform: scale(1); } }
+      
+      .alert-modal-content { border-top: 5px solid var(--warning-yellow); }
+      .alert-modal-content h3 { color: var(--danger-red); }
+      .alert-icon { font-size: 4em; color: var(--warning-yellow); margin-bottom: 15px; }
+      .alert-close-btn { background-color: var(--warning-yellow); }
+
+      @media (max-width: 600px) {
+        body { padding: 5px; }
+        .container { padding: 15px; margin: 10px auto; }
+        h2 { font-size: 1.3em; }
+        .nav-button { padding: 6px 10px; font-size: 0.8em; top: 15px; right: 15px; }
+        .btn-group, .sub-btn-group { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="<?= ScriptApp.getService().getUrl(); ?>?page=dashboard" class="nav-button">ดู Dashboard 📊</a>
+      <h2>ระบบบันทึกข้อมูล Carbon Footprint รพ.อุทัย</h2>
+      <p>เรียน ผู้ปฏิบัติงาน, กรุณาเลือกวันที่และแผนก จากนั้นเลือกกิจกรรมที่ต้องการบันทึกข้อมูล</p>
+
+      <form id="dataForm" onsubmit="event.preventDefault(); submitForm();">
+        <label for="dataDate">เลือกวันที่ของข้อมูลที่ต้องการบันทึก:</label>
+        <input type="date" id="dataDate" name="dataDate" required>
+        
+        <label for="department">กรุณาเลือกแผนก/กลุ่มงาน:</label>
+        <select id="department" name="department" required>
+            <option value="">-- เลือกแผนก --</option>
+            <option value="กลุ่มงานบริหารทั่วไป">กลุ่มงานบริหารทั่วไป</option>
+            <option value="กลุ่มการพยาบาล">กลุ่มการพยาบาล</option>
+            <option value="กลุ่มงานผู้ป่วยนอก">กลุ่มงานผู้ป่วยนอก</option>
+            <option value="กลุ่มงานผู้ป่วยใน">กลุ่มงานผู้ป่วยใน</option>
+            <option value="กลุ่มงานทันตกรรม">กลุ่มงานทันตกรรม</option>
+            <option value="กลุ่มงานเภสัชกรรม">กลุ่มงานเภสัชกรรม</option>
+            <option value="กลุ่มงานบริการด้านปฐมภูมิและองค์รวม">กลุ่มงานบริการด้านปฐมภูมิและองค์รวม</option>
+            <option value="งานซ่อมบำรุง">งานซ่อมบำรุง</option>
+            <option value="งานยานพาหนะ">งานยานพาหนะ</option>
+            <option value="งานโภชนาการ">งานโภชนาการ</option>
+        </select>
+
+        <p><strong>เลือกประเภทข้อมูลที่ต้องการบันทึก:</strong></p>
+        <div class="btn-group">
+          <button type="button" onclick="toggleInput('electricityDiv', this)">การใช้ไฟฟ้า</button>
+          <button type="button" onclick="toggleInput('waterDiv', this)">การใช้น้ำประปา</button>
+          <button type="button" onclick="toggleInput('paperDiv', this)">การใช้กระดาษ</button>
+          <button type="button" onclick="toggleInput('gasLpgDiv', this)">การใช้ก๊าซหุงต้ม</button>
+          <button type="button" onclick="toggleSubMenu('wasteSubMenu', this)">การทิ้งขยะ</button>
+          <button type="button" onclick="toggleSubMenu('oilSubMenu', this)">การใช้น้ำมัน</button>
+        </div>
+
+        <div id="wasteSubMenu" class="sub-btn-group">
+            <button type="button" onclick="toggleInput('infectiousWasteDiv', this)">ขยะติดเชื้อ</button>
+            <button type="button" onclick="toggleInput('generalWasteDiv', this)">ขยะทั่วไป</button>
+            <button type="button" onclick="toggleInput('organicWasteDiv', this)">ขยะอินทรีย์</button>
+        </div>
+        
+        <div id="oilSubMenu" class="sub-btn-group">
+            <button type="button" onclick="toggleInput('dieselVehicleDiv', this)">ดีเซล (ยานพาหนะ)</button>
+            <button type="button" onclick="toggleInput('dieselMachineDiv', this)">ดีเซล (เครื่องจักร)</button>
+            <button type="button" onclick="toggleInput('benzinVehicleDiv', this)">เบนซิน (ยานพาหนะ)</button>
+            <button type="button" onclick="toggleInput('benzinMachineDiv', this)">เบนซิน (เครื่องจักร)</button>
+        </div>
+
+        <div id="electricityDiv" class="input-group"><label for="electricity">ปริมาณการใช้ไฟฟ้า (kWh/Unit)</label><input type="number" step="0.01" id="electricity" name="electricity" placeholder="เช่น 1500.50"></div>
+        <div id="waterDiv" class="input-group"><label for="water">ปริมาณการใช้น้ำประปาส่วนภูมิภาค (ลูกบาศก์เมตร)</label><input type="number" step="0.01" id="water" name="water" placeholder="เช่น 80.25"></div>
+        <div id="paperDiv" class="input-group"><label for="paper">ปริมาณการใช้กระดาษ A4 (รีม)</label><input type="number" step="1" id="paper" name="paper" placeholder="เช่น 10"></div>
+        <div id="gasLpgDiv" class="input-group"><label for="gasLpg">การใช้ก๊าซหุงต้ม (กิโลกรัม)</label><input type="number" step="0.01" id="gasLpg" name="gasLpg" placeholder="เช่น 15.5"></div>
+        <div id="infectiousWasteDiv" class="input-group"><label for="infectiousWaste">น้ำหนักขยะติดเชื้อที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="infectiousWaste" name="infectiousWaste" placeholder="เช่น 55.50"></div>
+        <div id="generalWasteDiv" class="input-group"><label for="generalWaste">น้ำหนักขยะทั่วไปที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="generalWaste" name="generalWaste" placeholder="เช่น 250.75"></div>
+        <div id="organicWasteDiv" class="input-group"><label for="organicWaste">น้ำหนักขยะอินทรีย์ที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="organicWaste" name="organicWaste" placeholder="เช่น 120.00"></div>
+        <div id="dieselVehicleDiv" class="input-group"><label for="dieselVehicle">ปริมาณดีเซล - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="dieselVehicle" name="dieselVehicle" placeholder="เช่น 120.50"></div>
+        <div id="dieselMachineDiv" class="input-group"><label for="dieselMachine">ปริมาณดีเซล - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="dieselMachine" name="dieselMachine" placeholder="เช่น 150.00"></div>
+        <div id="benzinVehicleDiv" class="input-group"><label for="benzinVehicle">ปริมาณเบนซิน - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="benzinVehicle" name="benzinVehicle" placeholder="เช่น 100.25"></div>
+        <div id="benzinMachineDiv" class="input-group"><label for="benzinMachine">ปริมาณเบนซิน - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="benzinMachine" name="benzinMachine" placeholder="เช่น 50.00"></div>
+
+        <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
+      </form>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay">
+      <div id="loading-modal" class="modal-content">
+        <div class="spinner"></div>
+        <h3>กำลังบันทึกข้อมูล...</h3>
+        <p>กรุณารอสักครู่</p>
+      </div>
+      <div id="success-modal" class="modal-content">
+        <div class="co2-graphic">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g class="co2-cloud">
+              <circle cx="35" cy="65" r="15"/>
+              <circle cx="55" cy="60" r="20"/>
+              <circle cx="75" cy="65" r="15"/>
+              <text x="55" y="70" font-family="Arial, sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold">CO₂</text>
+            </g>
+            <path class="leaf" d="M 50,95 C 20,80 20,40 50,10 C 80,40 80,80 50,95 Z" />
+            <line class="leaf" x1="50" y1="95" x2="50" y2="40" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>คุณคือส่วนหนึ่ง ที่ทำให้โลกดีขึ้น!</h3>
+        <p>ข้อมูลของท่านถูกบันทึกเรียบร้อย</p>
+        <button class="modal-close-btn" onclick="closeModal()">ยอดเยี่ยม</button>
+      </div>
+      <div id="alert-modal" class="modal-content alert-modal-content">
+        <div class="alert-icon">⚠️</div>
+        <h3>ข้อมูลไม่สมบูรณ์</h3>
+        <p id="alert-message"></p>
+        <button class="modal-close-btn alert-close-btn" onclick="closeModal()">รับทราบ</button>
+      </div>
+    </div>
+
+    <script>
+      const overlay = document.getElementById('modal-overlay');
+      const loadingModal = document.getElementById('loading-modal');
+      const successModal = document.getElementById('success-modal');
+      const alertModal = document.getElementById('alert-modal');
+      const alertMessage = document.getElementById('alert-message');
+
+      function toggleInput(divId, button) {
+        const div = document.getElementById(divId);
+        const isActive = button.classList.contains('active');
+        
+        if (isActive) {
+          div.style.display = "none";
+          button.classList.remove("active");
+        } else {
+          div.style.display = "block";
+          button.classList.add("active");
+        }
+      }
+
+      function toggleSubMenu(subMenuId, mainButton) {
+        const subMenu = document.getElementById(subMenuId);
+        const isActive = mainButton.classList.contains('active');
+
+        if (isActive) {
+          subMenu.style.display = "none";
+          mainButton.classList.remove("active");
+          // Hide all sub-inputs when closing the sub-menu
+          const subButtons = subMenu.querySelectorAll('button');
+          subButtons.forEach(button => {
+            button.classList.remove('active');
+            const onclickAttr = button.getAttribute('onclick');
+            const targetDivId = onclickAttr.match(/'([^']+)'/)[1]; 
+            const targetDiv = document.getElementById(targetDivId);
+            if (targetDiv) {
+              targetDiv.style.display = 'none';
+            }
+          });
+        } else {
+          subMenu.style.display = "flex";
+          mainButton.classList.add("active");
+        }
+      }
+      
+      function resetFormToInitialState() {
+        document.getElementById('dataForm').reset();
+        document.querySelectorAll('.input-group, .sub-btn-group').forEach(div => div.style.display = 'none');
+        document.querySelectorAll('.btn-group button, .sub-btn-group button').forEach(btn => btn.classList.remove('active'));
+        // Set date to today by default for convenience
+        document.getElementById('dataDate').valueAsDate = new Date();
+      }
+      
+      function showAlert(message) {
+        alertMessage.textContent = message;
+        overlay.style.display = 'flex';
+        alertModal.style.display = 'block';
+        loadingModal.style.display = 'none';
+        successModal.style.display = 'none';
+      }
+
+      function submitForm() {
+        const dataDate = document.getElementById('dataDate').value;
+        const department = document.getElementById('department').value;
+
+        if (!dataDate) {
+          showAlert("กรุณาระบุวันที่ของข้อมูลที่ต้องการบันทึก");
+          return;
+        }
+        if (!department) {
+          showAlert("กรุณาเลือกแผนกของท่าน");
+          return;
+        }
+        
+        const allNumberInputs = document.querySelectorAll('.input-group input[type="number"]');
+        let hasData = false;
+
+        for (const input of allNumberInputs) {
+            if (input.value && parseFloat(input.value) > 0) {
+                hasData = true;
+                break; 
+            }
+        }
+
+        if (!hasData) {
+            showAlert("กรุณาเลือกประเภทและกรอกข้อมูลที่ต้องการบันทึกอย่างน้อย 1 รายการ (ต้องมีค่ามากกว่า 0)");
+            return;
+        }
+        
+        const formData = {
+          dataDate: dataDate, 
+          department: department,
+          electricity: parseFloat(document.getElementById('electricity').value) || 0,
+          water: parseFloat(document.getElementById('water').value) || 0,
+          paper: parseFloat(document.getElementById('paper').value) || 0,
+          gasLpg: parseFloat(document.getElementById('gasLpg').value) || 0,
+          infectiousWaste: parseFloat(document.getElementById('infectiousWaste').value) || 0,
+          generalWaste: parseFloat(document.getElementById('generalWaste').value) || 0,
+          organicWaste: parseFloat(document.getElementById('organicWaste').value) || 0,
+          dieselVehicle: parseFloat(document.getElementById('dieselVehicle').value) || 0,
+          dieselMachine: parseFloat(document.getElementById('dieselMachine').value) || 0,
+          benzinVehicle: parseFloat(document.getElementById('benzinVehicle').value) || 0,
+          benzinMachine: parseFloat(document.getElementById('benzinMachine').value) || 0
+        };
+
+        overlay.style.display = 'flex';
+        loadingModal.style.display = 'block';
+        alertModal.style.display = 'none';
+        successModal.style.display = 'none';
+
+        // Check if the code is running in the Google Apps Script environment
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(response => {
+              loadingModal.style.display = 'none';
+              successModal.style.display = 'block';
+              console.log(response);
+            })
+            .withFailureHandler(error => {
+              loadingModal.style.display = 'none';
+              showAlert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+              console.error(error);
+            })
+            .saveData(formData);
+        } else {
+          // Fallback for local/preview environment where google.script is not available
+          console.log("Running in simulation mode. This is expected during local development or preview.");
+          // Simulate a successful save for previewing
+          setTimeout(() => {
+              loadingModal.style.display = 'none';
+              successModal.style.display = 'block';
+          }, 1500);
+        }
+      }
+
+      function closeModal() {
+        overlay.style.display = 'none';
+        successModal.style.display = 'none';
+        alertModal.style.display = 'none';
+        loadingModal.style.display = 'none';
+        resetFormToInitialState();
+      }
+
+      // Initialize form on page load
+      document.addEventListener('DOMContentLoaded', (event) => {
+        resetFormToInitialState();
+      });
+    </script>
+  </body>
+</html>
