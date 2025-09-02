@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="th">
+<head>
     <base target="_top">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกข้อมูล Carbon Footprint</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
@@ -16,6 +18,15 @@
         --border-light: #ddd;
         --warning-yellow: #ffc107;
         --danger-red: #dc3545;
+        /* Colors for Dashboard Button */
+        --primary-blue: #007bff;
+        --primary-blue-darker: #0056b3;
+      }
+
+      @property --angle {
+        syntax: '<angle>';
+        inherits: false;
+        initial-value: 0deg;
       }
 
       body { 
@@ -28,49 +39,118 @@
         justify-content: center;
         align-items: flex-start;
         min-height: 100vh;
+        box-sizing: border-box;
       }
+
       .container { 
         width: 100%;
         max-width: 700px; 
-        margin: 20px auto; 
+        margin: 20px auto;
         background: white; 
-        padding: 25px; 
+        padding: 25px;
         border-radius: 12px; 
         box-shadow: 0 6px 20px rgba(0,0,0,0.08); 
         position: relative;
         box-sizing: border-box;
       }
-      .nav-button { 
-        position: absolute; 
-        top: 20px; 
-        right: 20px; 
-        background-color: #6c757d; 
-        color: white; 
-        padding: 8px 15px; 
-        text-decoration: none; 
-        border-radius: 5px; 
-        font-size: 0.9em; 
-        transition: background-color 0.3s; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        flex-wrap: wrap; 
       }
-      .nav-button:hover {
-        background-color: #5a6268;
-      }
-      h2 { 
-        color: var(--primary-green); 
-        border-bottom: 3px solid var(--secondary-green); 
-        padding-bottom: 10px; 
-        font-size: 1.6em; 
-        margin-top: 0;
+
+      /* Dashboard Button with Animated Border */
+      .dashboard-button {
+        position: relative;
+        z-index: 1;
+        color: var(--primary-blue-darker);
+        padding: 12px 24px;
+        text-decoration: none;
+        font-size: 1em;
+        font-weight: bold;
+        display: inline-block;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.3s ease;
+        background: conic-gradient(
+          from var(--angle),
+          transparent 0%,
+          #ff00ff 15%,
+          #0000ff,
+          #00ffff,
+          #00ff00,
+          #ffff00,
+          #ff0000,
+          #ff00ff 70%,
+          transparent 85%
+        );
+        animation: animate-snake-border 8.0s linear infinite;
       }
       
+      .dashboard-button::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        bottom: 2px;
+        background-color: white;
+        border-radius: 6px;
+        z-index: -1;
+        transition: background-color 0.3s ease;
+      }
+
+      .dashboard-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        color: white;
+      }
+      
+      .dashboard-button:hover::before {
+        background-color: var(--primary-blue-darker);
+      }
+
+      @keyframes animate-snake-border {
+        0% { --angle: 0deg; }
+        100% { --angle: 360deg; }
+      }   
+
+      h2 { 
+        color: var(--primary-green); 
+        font-size: 1.6em; 
+        margin: 0;
+      }
+      
+      p {
+        line-height: 1.6;
+      }
+      
+      /* Main container for activity buttons */
       .btn-group {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
         margin-top: 15px;
       }
-      .btn-group button { 
+
+      /* Wrapper for each button and its content */
+      .activity-item, .sub-activity-item {
+        flex: 1 1 100%; /* Each item takes full width initially */
+        display: flex;
+        flex-direction: column;
+      }
+
+      .btn-group > .activity-item {
+         flex: 1 1 calc(50% - 10px); /* Two columns on larger screens */
+      }
+
+      /* Styling for the main activity buttons */
+      .activity-btn { 
         background-color: var(--secondary-green); 
         color: white; 
         padding: 12px 16px; 
@@ -80,58 +160,68 @@
         font-size: 1em; 
         font-family: 'Sarabun', sans-serif;
         transition: all 0.3s ease; 
-        flex-grow: 1; 
         box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        width: 100%;
+        text-align: left;
       }
-      .btn-group button:hover { 
+      .activity-btn:hover { 
         background-color: #45a049; 
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       }
-      .btn-group button.active { 
+      .activity-btn.active { 
         background-color: #00796b; 
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         transform: translateY(0);
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
       }
       
       .sub-btn-group { 
-        padding-left: 15px; 
-        margin-top: 10px; 
-        border-left: 3px solid var(--secondary-green); 
-        display: none; /* Initially hidden */
-        flex-wrap: wrap; 
-        gap: 8px; 
+        display: none; /* Hidden by default */
+        flex-direction: column;
+        gap: 8px;
+        padding: 15px;
+        background-color: #fdfdfd;
+        border: 1px solid #eee;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
       }
-      .sub-btn-group button { 
+
+      .sub-activity-item button { 
         background: #e8f5e9;
         border: 1px solid var(--secondary-green);
         color: var(--primary-green); 
         font-weight: bold; 
         font-size: 0.9em; 
         padding: 10px 14px; 
-        flex-grow: 1;
         border-radius: 8px;
         cursor: pointer;
         font-family: 'Sarabun', sans-serif;
         transition: all 0.3s ease;
+        width: 100%;
+        text-align: left;
       }
-      .sub-btn-group button:hover {
+      .sub-activity-item button:hover {
         background: #c8e6c9;
       }
-      .sub-btn-group button.active { 
+      .sub-activity-item button.active { 
         background: var(--primary-green);
         color: white; 
         border-color: var(--primary-green); 
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
       }
       
       .input-group { 
-        display: none; /* Initially hidden */
-        margin-top: 20px; 
+        display: none; /* Hidden by default */
         padding: 20px; 
         border: 1px solid var(--border-light); 
-        border-radius: 8px; 
+        border-top: none;
+        border-radius: 0 0 8px 8px; 
         background-color: #fafcfa; 
       }
+
       label { 
         display: block; 
         margin-bottom: 8px; 
@@ -173,7 +263,7 @@
       .modal-content h3 { color: var(--text-dark); margin-top: 0; }
       .modal-close-btn { background-color: var(--secondary-green); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; margin-top: 15px; }
       
-      /* --- Leaf Success Graphic Styles --- */
+      /* Leaf Success Graphic Styles */
       .co2-graphic { width: 120px; height: 100px; margin: 0 auto 15px auto; position: relative; }
       .co2-graphic .co2-cloud { fill: #a0aec0; transition: all 0.5s ease-in-out; animation: fadeOutAndShrink 1s ease-in-out 0.5s forwards; }
       .co2-graphic .leaf { fill: #48bb78; stroke: #2f855a; stroke-width: 2; transform-origin: 50% 100%; opacity: 0; animation: growIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s forwards; }
@@ -185,109 +275,148 @@
       .alert-icon { font-size: 4em; color: var(--warning-yellow); margin-bottom: 15px; }
       .alert-close-btn { background-color: var(--warning-yellow); }
 
+      /* Responsive Styles for Mobile */
       @media (max-width: 600px) {
         body { padding: 5px; }
-        .container { padding: 15px; margin: 10px auto; }
+        .container { padding: 20px; margin: 10px auto; }
+        
+        .header-container {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .dashboard-button {
+            padding: 10px 18px;
+            font-size: 0.9em;
+        }
+
         h2 { font-size: 1.3em; }
-        .nav-button { padding: 6px 10px; font-size: 0.8em; top: 15px; right: 15px; }
-        .btn-group, .sub-btn-group { flex-direction: column; }
+        .btn-group > .activity-item {
+            flex-basis: 100%; /* One column on mobile */
+        }
       }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="container">
-     <a href="https://aase7en.github.io/CarbonFootprint/?page=dashboard" class="nav-button" target="_top">ดู Dashboard 📊</a>
-      <h2>ระบบบันทึกข้อมูล Carbon Footprint รพ.อุทัย</h2>
-      <p>เรียน ผู้ปฏิบัติงาน, กรุณาเลือกวันที่และแผนก จากนั้นเลือกกิจกรรมที่ต้องการบันทึกข้อมูล</p>
-
-      <form id="dataForm" onsubmit="event.preventDefault(); submitForm();">
-        <label for="dataDate">เลือกวันที่ของข้อมูลที่ต้องการบันทึก:</label>
-        <input type="date" id="dataDate" name="dataDate" required>
-        
-        <label for="department">กรุณาเลือกแผนก/กลุ่มงาน:</label>
-        <select id="department" name="department" required>
-            <option value="">-- เลือกแผนก --</option>
-            <option value="กลุ่มงานบริหารทั่วไป">กลุ่มงานบริหารทั่วไป</option>
-            <option value="กลุ่มการพยาบาล">กลุ่มการพยาบาล</option>
-            <option value="กลุ่มงานผู้ป่วยนอก">กลุ่มงานผู้ป่วยนอก</option>
-            <option value="กลุ่มงานผู้ป่วยใน">กลุ่มงานผู้ป่วยใน</option>
-            <option value="กลุ่มงานทันตกรรม">กลุ่มงานทันตกรรม</option>
-            <option value="กลุ่มงานเภสัชกรรม">กลุ่มงานเภสัชกรรม</option>
-            <option value="กลุ่มงานบริการด้านปฐมภูมิและองค์รวม">กลุ่มงานบริการด้านปฐมภูมิและองค์รวม</option>
-            <option value="งานซ่อมบำรุง">งานซ่อมบำรุง</option>
-            <option value="งานยานพาหนะ">งานยานพาหนะ</option>
-            <option value="งานโภชนาการ">งานโภชนาการ</option>
-        </select>
-
-        <p><strong>เลือกประเภทข้อมูลที่ต้องการบันทึก:</strong></p>
-        <div class="btn-group">
-          <button type="button" onclick="toggleInput('electricityDiv', this)">การใช้ไฟฟ้า</button>
-          <button type="button" onclick="toggleInput('waterDiv', this)">การใช้น้ำประปา</button>
-          <button type="button" onclick="toggleInput('paperDiv', this)">การใช้กระดาษ</button>
-          <button type="button" onclick="toggleInput('gasLpgDiv', this)">การใช้ก๊าซหุงต้ม</button>
-          <button type="button" onclick="toggleSubMenu('wasteSubMenu', this)">การทิ้งขยะ</button>
-          <button type="button" onclick="toggleSubMenu('oilSubMenu', this)">การใช้น้ำมัน</button>
+        <div class="header-container">
+            <h2>ระบบบันทึกข้อมูล Carbon Footprint รพ.อุทัย</h2>
+            <a href="https://aase7en.github.io/CarbonFootprint/?page=dashboard" class="dashboard-button" target="_top">Dashboard</a>
         </div>
+        <p>เรียน ผู้ปฏิบัติงาน, กรุณาเลือกวันที่และแผนก จากนั้นเลือกกิจกรรมที่ต้องการบันทึกข้อมูล</p>
 
-        <div id="wasteSubMenu" class="sub-btn-group">
-            <button type="button" onclick="toggleInput('infectiousWasteDiv', this)">ขยะติดเชื้อ</button>
-            <button type="button" onclick="toggleInput('generalWasteDiv', this)">ขยะทั่วไป</button>
-            <button type="button" onclick="toggleInput('organicWasteDiv', this)">ขยะอินทรีย์</button>
-        </div>
-        
-        <div id="oilSubMenu" class="sub-btn-group">
-            <button type="button" onclick="toggleInput('dieselVehicleDiv', this)">ดีเซล (ยานพาหนะ)</button>
-            <button type="button" onclick="toggleInput('dieselMachineDiv', this)">ดีเซล (เครื่องจักร)</button>
-            <button type="button" onclick="toggleInput('benzinVehicleDiv', this)">เบนซิน (ยานพาหนะ)</button>
-            <button type="button" onclick="toggleInput('benzinMachineDiv', this)">เบนซิน (เครื่องจักร)</button>
-        </div>
+        <form id="dataForm" onsubmit="event.preventDefault(); submitForm();">
+            <label for="dataDate">เลือกวันที่ของข้อมูลที่ต้องการบันทึก:</label>
+            <input type="date" id="dataDate" name="dataDate" required>
+            
+            <label for="department">กรุณาเลือกแผนก/กลุ่มงาน:</label>
+            <select id="department" name="department" required>
+                <option value="">-- เลือกแผนก --</option>
+                <option value="กลุ่มงานบริหารทั่วไป">กลุ่มงานบริหารทั่วไป</option>
+                <option value="กลุ่มการพยาบาล">กลุ่มการพยาบาล</option>
+                <option value="กลุ่มงานผู้ป่วยนอก">กลุ่มงานผู้ป่วยนอก</option>
+                <option value="กลุ่มงานผู้ป่วยใน">กลุ่มงานผู้ป่วยใน</option>
+                <option value="กลุ่มงานทันตกรรม">กลุ่มงานทันตกรรม</option>
+                <option value="กลุ่มงานเภสัชกรรม">กลุ่มงานเภสัชกรรม</option>
+                <option value="กลุ่มงานบริการด้านปฐมภูมิและองค์รวม">กลุ่มงานบริการด้านปฐมภูมิและองค์รวม</option>
+                <option value="งานซ่อมบำรุง">งานซ่อมบำรุง</option>
+                <option value="งานยานพาหนะ">งานยานพาหนะ</option>
+                <option value="งานโภชนาการ">งานโภชนาการ</option>
+            </select>
 
-        <div id="electricityDiv" class="input-group"><label for="electricity">ปริมาณการใช้ไฟฟ้า (kWh/Unit)</label><input type="number" step="0.01" id="electricity" name="electricity" placeholder="เช่น 1500.50"></div>
-        <div id="waterDiv" class="input-group"><label for="water">ปริมาณการใช้น้ำประปาส่วนภูมิภาค (ลูกบาศก์เมตร)</label><input type="number" step="0.01" id="water" name="water" placeholder="เช่น 80.25"></div>
-        <div id="paperDiv" class="input-group"><label for="paper">ปริมาณการใช้กระดาษ A4 (รีม)</label><input type="number" step="1" id="paper" name="paper" placeholder="เช่น 10"></div>
-        <div id="gasLpgDiv" class="input-group"><label for="gasLpg">การใช้ก๊าซหุงต้ม (กิโลกรัม)</label><input type="number" step="0.01" id="gasLpg" name="gasLpg" placeholder="เช่น 15.5"></div>
-        <div id="infectiousWasteDiv" class="input-group"><label for="infectiousWaste">น้ำหนักขยะติดเชื้อที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="infectiousWaste" name="infectiousWaste" placeholder="เช่น 55.50"></div>
-        <div id="generalWasteDiv" class="input-group"><label for="generalWaste">น้ำหนักขยะทั่วไปที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="generalWaste" name="generalWaste" placeholder="เช่น 250.75"></div>
-        <div id="organicWasteDiv" class="input-group"><label for="organicWaste">น้ำหนักขยะอินทรีย์ที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="organicWaste" name="organicWaste" placeholder="เช่น 120.00"></div>
-        <div id="dieselVehicleDiv" class="input-group"><label for="dieselVehicle">ปริมาณดีเซล - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="dieselVehicle" name="dieselVehicle" placeholder="เช่น 120.50"></div>
-        <div id="dieselMachineDiv" class="input-group"><label for="dieselMachine">ปริมาณดีเซล - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="dieselMachine" name="dieselMachine" placeholder="เช่น 150.00"></div>
-        <div id="benzinVehicleDiv" class="input-group"><label for="benzinVehicle">ปริมาณเบนซิน - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="benzinVehicle" name="benzinVehicle" placeholder="เช่น 100.25"></div>
-        <div id="benzinMachineDiv" class="input-group"><label for="benzinMachine">ปริมาณเบนซิน - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="benzinMachine" name="benzinMachine" placeholder="เช่น 50.00"></div>
+            <p><strong>เลือกประเภทข้อมูลที่ต้องการบันทึก:</strong></p>
+            <div class="btn-group">
+                <div class="activity-item">
+                    <button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้ไฟฟ้า</button>
+                    <div class="input-group" id="electricityDiv"><label for="electricity">ปริมาณการใช้ไฟฟ้า (kWh/Unit)</label><input type="number" step="0.01" id="electricity" name="electricity" placeholder="เช่น 1500.50"></div>
+                </div>
+                <div class="activity-item">
+                    <button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้น้ำประปา</button>
+                    <div class="input-group" id="waterDiv"><label for="water">ปริมาณการใช้น้ำประปาส่วนภูมิภาค (ลูกบาศก์เมตร)</label><input type="number" step="0.01" id="water" name="water" placeholder="เช่น 80.25"></div>
+                </div>
+                <div class="activity-item">
+                    <button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้กระดาษ</button>
+                    <div class="input-group" id="paperDiv"><label for="paper">ปริมาณการใช้กระดาษ A4 (รีม)</label><input type="number" step="1" id="paper" name="paper" placeholder="เช่น 10"></div>
+                </div>
+                <div class="activity-item">
+                    <button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้ก๊าซหุงต้ม</button>
+                    <div class="input-group" id="gasLpgDiv"><label for="gasLpg">การใช้ก๊าซหุงต้ม (กิโลกรัม)</label><input type="number" step="0.01" id="gasLpg" name="gasLpg" placeholder="เช่น 15.5"></div>
+                </div>
+                <div class="activity-item">
+                    <button type="button" class="activity-btn" onclick="handleActivityClick(this)">การทิ้งขยะ</button>
+                    <div class="sub-btn-group" id="wasteSubMenu">
+                        <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">ขยะติดเชื้อ</button>
+                            <div class="input-group" id="infectiousWasteDiv"><label for="infectiousWaste">น้ำหนักขยะติดเชื้อที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="infectiousWaste" name="infectiousWaste" placeholder="เช่น 55.50"></div>
+                        </div>
+                        <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">ขยะทั่วไป</button>
+                            <div class="input-group" id="generalWasteDiv"><label for="generalWaste">น้ำหนักขยะทั่วไปที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="generalWaste" name="generalWaste" placeholder="เช่น 250.75"></div>
+                        </div>
+                        <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">ขยะอินทรีย์</button>
+                            <div class="input-group" id="organicWasteDiv"><label for="organicWaste">น้ำหนักขยะอินทรีย์ที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="organicWaste" name="organicWaste" placeholder="เช่น 120.00"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้น้ำมัน</button>
+                    <div class="sub-btn-group" id="oilSubMenu">
+                       <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">ดีเซล (ยานพาหนะ)</button>
+                            <div class="input-group" id="dieselVehicleDiv"><label for="dieselVehicle">ปริมาณดีเซล - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="dieselVehicle" name="dieselVehicle" placeholder="เช่น 120.50"></div>
+                        </div>
+                        <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">ดีเซล (เครื่องจักร)</button>
+                            <div class="input-group" id="dieselMachineDiv"><label for="dieselMachine">ปริมาณดีเซล - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="dieselMachine" name="dieselMachine" placeholder="เช่น 150.00"></div>
+                        </div>
+                        <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">เบนซิน (ยานพาหนะ)</button>
+                             <div class="input-group" id="benzinVehicleDiv"><label for="benzinVehicle">ปริมาณเบนซิน - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="benzinVehicle" name="benzinVehicle" placeholder="เช่น 100.25"></div>
+                        </div>
+                        <div class="sub-activity-item">
+                            <button type="button" onclick="handleActivityClick(this)">เบนซิน (เครื่องจักร)</button>
+                            <div class="input-group" id="benzinMachineDiv"><label for="benzinMachine">ปริมาณเบนซิน - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="benzinMachine" name="benzinMachine" placeholder="เช่น 50.00"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
-      </form>
+            <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
+        </form>
     </div>
 
     <!-- Modals -->
     <div id="modal-overlay" class="modal-overlay">
-      <div id="loading-modal" class="modal-content">
-        <div class="spinner"></div>
-        <h3>กำลังบันทึกข้อมูล...</h3>
-        <p>กรุณารอสักครู่</p>
-      </div>
-      <div id="success-modal" class="modal-content">
-        <div class="co2-graphic">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g class="co2-cloud">
-              <circle cx="35" cy="65" r="15"/>
-              <circle cx="55" cy="60" r="20"/>
-              <circle cx="75" cy="65" r="15"/>
-              <text x="55" y="70" font-family="Arial, sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold">CO₂</text>
-            </g>
-            <path class="leaf" d="M 50,95 C 20,80 20,40 50,10 C 80,40 80,80 50,95 Z" />
-            <line class="leaf" x1="50" y1="95" x2="50" y2="40" stroke-linecap="round"/>
-          </svg>
+        <div id="loading-modal" class="modal-content">
+            <div class="spinner"></div>
+            <h3>กำลังบันทึกข้อมูล...</h3>
+            <p>กรุณารอสักครู่</p>
         </div>
-        <h3>คุณคือส่วนหนึ่ง ที่ทำให้โลกดีขึ้น!</h3>
-        <p>ข้อมูลของท่านถูกบันทึกเรียบร้อย</p>
-        <button class="modal-close-btn" onclick="closeModal()">ยอดเยี่ยม</button>
-      </div>
-      <div id="alert-modal" class="modal-content alert-modal-content">
-        <div class="alert-icon">⚠️</div>
-        <h3>ข้อมูลไม่สมบูรณ์</h3>
-        <p id="alert-message"></p>
-        <button class="modal-close-btn alert-close-btn" onclick="closeModal()">รับทราบ</button>
-      </div>
+        <div id="success-modal" class="modal-content">
+            <div class="co2-graphic">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g class="co2-cloud">
+                        <circle cx="35" cy="65" r="15"/>
+                        <circle cx="55" cy="60" r="20"/>
+                        <circle cx="75" cy="65" r="15"/>
+                        <text x="55" y="70" font-family="Arial, sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold">CO₂</text>
+                    </g>
+                    <path class="leaf" d="M 50,95 C 20,80 20,40 50,10 C 80,40 80,80 50,95 Z" />
+                    <line class="leaf" x1="50" y1="95" x2="50" y2="40" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h3>คุณคือส่วนหนึ่ง ที่ทำให้โลกดีขึ้น!</h3>
+            <p>ข้อมูลของท่านถูกบันทึกเรียบร้อย</p>
+            <button class="modal-close-btn" onclick="closeModal()">ยอดเยี่ยม</button>
+        </div>
+        <div id="alert-modal" class="modal-content alert-modal-content">
+            <div class="alert-icon">⚠️</div>
+            <h3>ข้อมูลไม่สมบูรณ์</h3>
+            <p id="alert-message"></p>
+            <button class="modal-close-btn alert-close-btn" onclick="closeModal()">รับทราบ</button>
+        </div>
     </div>
 
     <script>
@@ -297,48 +426,25 @@
       const alertModal = document.getElementById('alert-modal');
       const alertMessage = document.getElementById('alert-message');
 
-      function toggleInput(divId, button) {
-        const div = document.getElementById(divId);
-        const isActive = button.classList.contains('active');
-        
-        if (isActive) {
-          div.style.display = "none";
-          button.classList.remove("active");
-        } else {
-          div.style.display = "block";
-          button.classList.add("active");
-        }
-      }
+      function handleActivityClick(clickedButton) {
+        const content = clickedButton.nextElementSibling;
+        const isActive = clickedButton.classList.toggle('active');
 
-      function toggleSubMenu(subMenuId, mainButton) {
-        const subMenu = document.getElementById(subMenuId);
-        const isActive = mainButton.classList.contains('active');
+        content.style.display = isActive 
+            ? (content.classList.contains('sub-btn-group') ? 'flex' : 'block') 
+            : 'none';
 
-        if (isActive) {
-          subMenu.style.display = "none";
-          mainButton.classList.remove("active");
-          // Hide all sub-inputs when closing the sub-menu
-          const subButtons = subMenu.querySelectorAll('button');
-          subButtons.forEach(button => {
-            button.classList.remove('active');
-            const onclickAttr = button.getAttribute('onclick');
-            const targetDivId = onclickAttr.match(/'([^']+)'/)[1]; 
-            const targetDiv = document.getElementById(targetDivId);
-            if (targetDiv) {
-              targetDiv.style.display = 'none';
-            }
-          });
-        } else {
-          subMenu.style.display = "flex";
-          mainButton.classList.add("active");
+        // If a sub-menu is being closed, also close all its children to avoid orphaned inputs
+        if (!isActive && content.classList.contains('sub-btn-group')) {
+            content.querySelectorAll('button').forEach(subBtn => subBtn.classList.remove('active'));
+            content.querySelectorAll('.input-group').forEach(input => input.style.display = 'none');
         }
       }
       
       function resetFormToInitialState() {
         document.getElementById('dataForm').reset();
         document.querySelectorAll('.input-group, .sub-btn-group').forEach(div => div.style.display = 'none');
-        document.querySelectorAll('.btn-group button, .sub-btn-group button').forEach(btn => btn.classList.remove('active'));
-        // Set date to today by default for convenience
+        document.querySelectorAll('.activity-btn, .sub-activity-item button').forEach(btn => btn.classList.remove('active'));
         document.getElementById('dataDate').valueAsDate = new Date();
       }
       
@@ -367,9 +473,9 @@
         let hasData = false;
 
         for (const input of allNumberInputs) {
-            if (input.value && parseFloat(input.value) > 0) {
-                hasData = true;
-                break; 
+            if (input.offsetParent !== null && input.value && parseFloat(input.value) > 0) {
+              hasData = true;
+              break; 
             }
         }
 
@@ -399,7 +505,6 @@
         alertModal.style.display = 'none';
         successModal.style.display = 'none';
 
-        // Check if the code is running in the Google Apps Script environment
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run
             .withSuccessHandler(response => {
@@ -414,9 +519,7 @@
             })
             .saveData(formData);
         } else {
-          // Fallback for local/preview environment where google.script is not available
           console.log("Running in simulation mode. This is expected during local development or preview.");
-          // Simulate a successful save for previewing
           setTimeout(() => {
               loadingModal.style.display = 'none';
               successModal.style.display = 'block';
@@ -432,10 +535,10 @@
         resetFormToInitialState();
       }
 
-      // Initialize form on page load
       document.addEventListener('DOMContentLoaded', (event) => {
         resetFormToInitialState();
       });
     </script>
-  </body>
+</body>
 </html>
+
