@@ -66,6 +66,9 @@
             <a href="https://aase7en.github.io/CarbonFootprint/" class="mt-4 md:mt-0 w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" target="_top">
             กลับหน้าบันทึกข้อมูล
             </a>
+            <!-- <a href="<?= ScriptApp.getService().getUrl(); ?>" class="mt-4 md:mt-0 w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                กลับหน้าบันทึกข้อมูล
+            </a> -->
         </header>
 
         <!-- Filters Section -->
@@ -233,13 +236,20 @@
 
         function applyFiltersAndRender() {
             const startDate = document.getElementById('startDate').valueAsDate;
-            const endDate = document.getElementById('endDate').valueAsDate;
+            let endDate = document.getElementById('endDate').valueAsDate; // << เปลี่ยนจาก const เป็น let
             const department = document.getElementById('departmentFilter').value;
             const activity = document.getElementById('activityFilter').value;
 
+            // --- ✨ โค้ดที่เพิ่มเข้ามา ---
+            // ถ้่ามีการเลือกวันที่สิ้นสุด ให้ตั้งเวลาไปที่ท้ายสุดของวัน (23:59:59)
+            // เพื่อให้แน่ใจว่าข้อมูลทั้งหมดของวันนั้นจะถูกรวมเข้ามาด้วย
+            if (endDate) {
+                endDate.setHours(23, 59, 59, 999);
+            }
+            // --------------------------
+
             const filteredData = allData.filter(item => {
-                const itemDate = new Date(item.dataDate);
-                itemDate.setHours(0, 0, 0, 0);
+                const itemDate = item.dataDate; // ไม่ต้องสร้าง Date ใหม่ เพราะเป็น Date object อยู่แล้ว
                 
                 const isAfterStartDate = !startDate || itemDate >= startDate;
                 const isBeforeEndDate = !endDate || itemDate <= endDate;
@@ -250,7 +260,7 @@
 
             renderAll(filteredData);
         }
-
+        
         function renderAll(data) {
             renderSummary(data);
             sortAndRenderTable(data);
