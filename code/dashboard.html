@@ -151,244 +151,320 @@
         </main>
     </div>
 
-    <script>
-        let allData = [];
-        let sortState = { key: 'dataDate', direction: 'desc' };
+   <script>
+    let allData = [];
+    let filteredData = [];
+    let sortState = { key: 'dataDate', direction: 'desc' };
 
-        const emissionFactors = {
-            "การใช้ไฟฟ้า": 0.5821, // kgCO2e per kWh
-            "การใช้น้ำประปาส่วนภูมิภาค": 0.0264, // kgCO2e per m3
-            "การใช้กระดาษ A4": 1.8375, // kgCO2e per ream (assuming 1 ream = 2.5kg, 0.735 kgCO2e/kg)
-            "ขยะติดเชื้อ": 0.8421, // kgCO2e per kg
-            "ขยะทั่วไป": 0.8421, // kgCO2e per kg (landfill)
-            "ขยะอินทรีย์": 0.8421, // kgCO2e per kg (landfill)
-            "การใช้น้ำมันดีเซลกับยานพาหนะ": 2.7446, // kgCO2e per L
-            "การใช้น้ำมันดีเซลกับเครื่องจักร": 2.7446, // kgCO2e per L
-            "การใช้น้ำมันเบนซินกับยานพาหนะ": 2.3, // kgCO2e per L
-            "การใช้น้ำมันเบนซินกับเครื่องจักร": 2.3, // kgCO2e per L
-            "การใช้ก๊าซหุงต้ม": 2.983, // kgCO2e per kg
-        };
-
-        document.addEventListener("DOMContentLoaded", () => {
-            google.charts.load('current', {'packages':['corechart']});
-            google.charts.setOnLoadCallback(initializeDashboard);
-        });
+    // --- ✨ อัปเดตครั้งสุดท้าย ✨ ---
+    // Emission Factors ที่ปรับปรุงให้ตรงกับข้อมูลจริงใน Google Sheet ของคุณ 100%
+    const emissionFactors = {
+        // --- กิจกรรมมาตรฐาน ---
+        "การใช้ไฟฟ้า": 0.4984,
+        "การใช้น้ำประปาส่วนภูมิภาค": 0.0003,
+        "ขยะติดเชื้อ": 0.45,
+        "ขยะทั่วไป": 0.584,
+        "ขยะอินทรีย์": 0.584,
+        "การใช้ก๊าซหุงต้ม": 3.0337,
         
-        function initializeDashboard() {
-            ['startDate', 'endDate', 'departmentFilter', 'activityFilter'].forEach(id => {
-                document.getElementById(id).addEventListener('change', applyFiltersAndRender);
-            });
-            
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(dataLoaded).getSheetData();
-            } else {
-                console.log("Running in PREVIEW mode. Using mock data.");
-                const mockData = [
-                    ["2025-08-27T12:00:00.000Z", "2025-08-26", "กลุ่มการพยาบาล", "การใช้ไฟฟ้า", 2500, "kWh"],
-                    ["2025-08-27T12:01:00.000Z", "2025-08-26", "กลุ่มงานเภสัชกรรม", "การใช้กระดาษ A4", 15, "รีม"],
-                    ["2025-08-27T12:02:00.000Z", "2025-08-25", "งานโภชนาการ", "ขยะอินทรีย์", 120, "กิโลกรัม"],
-                    ["2025-08-28T10:00:00.000Z", "2025-08-27", "งานยานพาหนะ", "การใช้น้ำมันดีเซลกับยานพาหนะ", 55, "ลิตร"],
-                    ["2025-08-28T11:00:00.000Z", "2025-08-27", "กลุ่มงานทันตกรรม", "ขยะติดเชื้อ", 25, "กิโลกรัม"],
-                ];
-                setTimeout(() => dataLoaded(mockData), 500);
-            }
+        // --- กิจกรรมที่มาจากข้อมูลเก่า (ตรงตาม Google Sheet) ---
+        "ปริมาณดีเซล - ยานพาหนะ": 2.6938,
+        "ปริมาณเบนซิน - ยานพาหนะ": 2.2968,
+        "ปริมาณดีเซล - เครื่องจักร": 2.6938,
+        "ปริมาณเบนซิน - เครื่องจักร": 2.2968,
+        "ปริมาณการใช้กระดาษ A4": 1.8375,
+
+        // --- กิจกรรมใหม่ที่เพิ่มเข้ามา ---
+        "การใช้สารเคมี คลอรีน": 1.4, // ค่าประมาณการจาก Life Cycle Assessment
+        "การใช้หมึก": 3.0, // ค่าประมาณการทั่วไปสำหรับหมึกพิมพ์
+    };
+
+    // Map สำหรับแปลงชื่อกิจกรรมเก่าให้เป็นชื่อมาตรฐาน เพื่อการแสดงผลที่สวยงาม
+    const activityNameMap = {
+        "ปริมาณดีเซล - ยานพาหนะ": "การใช้น้ำมันดีเซล (ยานพาหนะ)",
+        "ปริมาณเบนซิน - ยานพาหนะ": "การใช้น้ำมันเบนซิน (ยานพาหนะ)",
+        "ปริมาณดีเซล - เครื่องจักร": "การใช้น้ำมันดีเซล (เครื่องจักร)",
+        "ปริมาณเบนซิน - เครื่องจักร": "การใช้น้ำมันเบนซิน (เครื่องจักร)",
+        "ปริมาณการใช้กระดาษ A4": "การใช้กระดาษ A4",
+    };
+    // -------------------------
+
+    // --- INITIALIZATION ---
+    document.addEventListener("DOMContentLoaded", () => {
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(fetchData);
+    });
+    
+    function fetchData() {
+        document.getElementById('loading').style.display = 'flex';
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run.withSuccessHandler(dataLoaded).getSheetData();
+        } else {
+            console.warn("Running in PREVIEW mode. Using mock data.");
+            const mockData = [
+                ["2025-09-22T12:00:00.000Z", "2025-09-22", "กลุ่มงานบริหารทั่วไป", "ปริมาณการใช้กระดาษ A4", 44, "รีม"],
+                ["2025-09-21T12:00:00.000Z", "2025-09-21", "งานซ่อมบำรุง", "ปริมาณเบนซิน - เครื่องจักร", 21, "ลิตร"],
+                ["2025-09-20T12:00:00.000Z", "2025-09-20", "กลุ่มการพยาบาล", "การใช้ไฟฟ้า", 60105, "kWh"],
+                ["2025-09-19T12:00:00.000Z", "2025-09-19", "กลุ่มงานผู้ป่วยนอก", "การใช้น้ำประปาส่วนภูมิภาค", 89, "ลูกบาศก์เมตร"],
+                ["2025-09-18T12:00:00.000Z", "2025-09-18", "กลุ่มงานเภสัชกรรม", "การใช้สารเคมี คลอรีน", 8.5, "ลิตร"]
+            ];
+            setTimeout(() => dataLoaded(mockData), 800);
+        }
+    }
+
+    function dataLoaded(dataFromServer) {
+        if (dataFromServer.error) {
+            document.getElementById('loading').innerHTML = `<p class="text-red-600 font-semibold">เกิดข้อผิดพลาด: ${dataFromServer.message}</p>`;
+            return;
         }
 
-        function dataLoaded(dataFromServer) {
-            if (dataFromServer.error) {
-                console.error("Error fetching sheet data:", dataFromServer.message);
-                document.getElementById('loading').innerHTML = `<p class="text-red-600 font-semibold">เกิดข้อผิดพลาด: ${dataFromServer.message}</p>`;
-                return;
-            }
+        allData = dataFromServer.map(row => {
+            const originalActivity = row[3] ? String(row[3]).trim() : '';
+            const value = parseFloat(row[4]) || 0;
+            const co2e = value * (emissionFactors[originalActivity] || 0);
+            const standardizedActivity = activityNameMap[originalActivity] || originalActivity;
 
-            allData = dataFromServer.map(row => {
-                const dateParts = row[1].split('-');
-                const activity = row[3];
-                const value = parseFloat(row[4]) || 0;
-                const co2e = value * (emissionFactors[activity] || 0);
-                return {
-                    dataDate: new Date(dateParts[0], dateParts[1] - 1, dateParts[2]),
-                    department: row[2],
-                    activity: activity,
-                    value: value,
-                    unit: row[5],
-                    co2e: co2e
-                };
-            }).filter(item => item.department && item.activity);
-            
-            populateFilters();
-            applyFiltersAndRender();
-            
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').classList.remove('hidden');
-        }
-
-        function populateFilters() {
-            const departments = [...new Set(allData.map(item => item.department))].sort((a,b) => a.localeCompare(b, 'th'));
-            const activities = [...new Set(allData.map(item => item.activity))].sort((a,b) => a.localeCompare(b, 'th'));
-            
-            const deptFilter = document.getElementById('departmentFilter');
-            departments.forEach(dept => deptFilter.add(new Option(dept, dept)));
-
-            const activityFilter = document.getElementById('activityFilter');
-            activities.forEach(activity => activityFilter.add(new Option(activity, activity)));
-        }
-
-        function applyFiltersAndRender() {
-            const startDate = document.getElementById('startDate').valueAsDate;
-            let endDate = document.getElementById('endDate').valueAsDate; // << เปลี่ยนจาก const เป็น let
-            const department = document.getElementById('departmentFilter').value;
-            const activity = document.getElementById('activityFilter').value;
-
-            // --- ✨ โค้ดที่เพิ่มเข้ามา ---
-            // ถ้่ามีการเลือกวันที่สิ้นสุด ให้ตั้งเวลาไปที่ท้ายสุดของวัน (23:59:59)
-            // เพื่อให้แน่ใจว่าข้อมูลทั้งหมดของวันนั้นจะถูกรวมเข้ามาด้วย
-            if (endDate) {
-                endDate.setHours(23, 59, 59, 999);
-            }
-            // --------------------------
-
-            const filteredData = allData.filter(item => {
-                const itemDate = item.dataDate; // ไม่ต้องสร้าง Date ใหม่ เพราะเป็น Date object อยู่แล้ว
-                
-                const isAfterStartDate = !startDate || itemDate >= startDate;
-                const isBeforeEndDate = !endDate || itemDate <= endDate;
-                const isDeptMatch = !department || item.department === department;
-                const isActivityMatch = !activity || item.activity === activity;
-                return isAfterStartDate && isBeforeEndDate && isDeptMatch && isActivityMatch;
-            });
-
-            renderAll(filteredData);
-        }
-        
-        function renderAll(data) {
-            renderSummary(data);
-            sortAndRenderTable(data);
-            renderChart(data);
-        }
-        
-        function renderSummary(data) {
-            const totalRecords = data.length;
-            const totalEmission = data.reduce((sum, item) => sum + item.co2e, 0);
-
-            document.getElementById('total-records').textContent = totalRecords.toLocaleString('th-TH');
-            document.getElementById('total-emission').textContent = totalEmission.toLocaleString('th-TH', { maximumFractionDigits: 2 });
-        }
-
-        function renderTable(data) {
-            const tableBody = document.getElementById('dataTableBody');
-            let subtotal = 0;
-            if (data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-gray-500 py-8">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
-                document.getElementById('subtotal-value').textContent = '0';
-                return;
-            }
-            tableBody.innerHTML = data.map(item => {
-                const formattedDate = item.dataDate.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-                subtotal += item.value;
-                return `<tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${formattedDate}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">${item.department}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${item.activity}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">${item.value.toLocaleString('th-TH')} ${item.unit}</td>
-                </tr>`;
-            }).join('');
-            document.getElementById('subtotal-value').textContent = subtotal.toLocaleString('th-TH');
-        }
-        
-        function sortTableByColumn(key, thElement) {
-            if (sortState.key === key) {
-                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortState.key = key;
-                sortState.direction = 'asc';
-            }
-            applyFiltersAndRender(); // Re-filter and re-render to apply sort
-        }
-
-        function sortAndRenderTable(data) {
-            const sortedData = [...data].sort((a, b) => {
-                const valA = a[sortState.key];
-                const valB = b[sortState.key];
-                
-                let comparison = 0;
-                if (valA > valB) {
-                    comparison = 1;
-                } else if (valA < valB) {
-                    comparison = -1;
-                }
-                
-                return sortState.direction === 'asc' ? comparison : -comparison;
-            });
-            
-            updateSortIndicators();
-            renderTable(sortedData);
-        }
-        
-        function updateSortIndicators() {
-            document.querySelectorAll('th .sort-indicator').forEach(span => span.innerHTML = '');
-            const th = document.querySelector(`th[onclick="sortTableByColumn('${sortState.key}', this)"]`);
-            if (th) {
-                th.querySelector('.sort-indicator').innerHTML = sortState.direction === 'asc' ? '▲' : '▼';
-            }
-        }
-
-        function renderChart(data) {
-            const aggregatedData = data.reduce((acc, item) => {
-                const { activity, co2e } = item;
-                acc[activity] = (acc[activity] || 0) + co2e;
-                return acc;
-            }, {});
-
-            const sortedActivities = Object.entries(aggregatedData).sort((a, b) => b[1] - a[1]);
-
-            if (sortedActivities.length === 0) {
-                 document.getElementById('chart_div').innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">ไม่มีข้อมูลสำหรับแสดงกราฟ</div>';
-                 return;
-            }
-
-            const chartData = [['กิจกรรม', 'kgCO₂e', { role: 'style' }, { role: 'tooltip', type: 'string', p: { html: true } }]];
-            const colors = ['#28a745', '#20c997', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545', '#6f42c1', '#6610f2', '#e83e8c'];
-            let colorIndex = 0;
-            
-            sortedActivities.forEach(([activity, val]) => {
-                const color = colors[colorIndex % colors.length];
-                const tooltip = `<div class="p-2 text-sm font-sans">
-                                   <div class="font-bold">${activity}</div>
-                                   <div>ปล่อย: <span class="font-bold">${val.toLocaleString('th-TH', {maximumFractionDigits: 2})}</span> kgCO₂e</div>
-                                 </div>`;
-                chartData.push([activity, val, color, tooltip]);
-                colorIndex++;
-            });
-
-            const dataTable = google.visualization.arrayToDataTable(chartData);
-            const options = {
-                title: 'สรุปการปล่อยก๊าซเรือนกระจกรายกิจกรรม',
-                titleTextStyle: { color: '#334155', fontName: 'Sarabun', fontSize: 18, bold: true },
-                chartArea: {width: '65%', height: '80%'},
-                hAxis: { 
-                    title: 'ปริมาณการปล่อย (kgCO₂e)', 
-                    minValue: 0, 
-                    format: 'short',
-                    titleTextStyle: { color: '#475569', fontName: 'Sarabun' },
-                    textStyle: { color: '#64748b', fontName: 'Sarabun' }
-                },
-                vAxis: { 
-                    textStyle: { color: '#475569', fontName: 'Sarabun', fontSize: 12 }
-                },
-                legend: { position: 'none' },
-                tooltip: { isHtml: true },
-                bar: { groupWidth: '75%' },
-                animation: {
-                    startup: true,
-                    duration: 1000,
-                    easing: 'out',
-                },
+            return {
+                dataDate: new Date(row[1]),
+                department: row[2],
+                activity: standardizedActivity,
+                value: value,
+                unit: row[5],
+                co2e: co2e
             };
+        }).filter(item => item.department && item.activity);
+        
+        initializeDashboard();
+    }
 
-            const chart = new google.visualization.BarChart(document.getElementById('chart_div'));
-            chart.draw(dataTable, options);
+    function initializeDashboard() {
+        populateFilters();
+        setupEventListeners();
+        setDateRangePreset(30);
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').classList.remove('hidden');
+    }
+
+    function populateFilters() {
+        const departments = [...new Set(allData.map(item => item.department))].sort((a,b) => a.localeCompare(b, 'th'));
+        const activities = [...new Set(allData.map(item => item.activity))].sort((a,b) => a.localeCompare(b, 'th'));
+        
+        const deptFilter = document.getElementById('departmentFilter');
+        deptFilter.innerHTML = '<option value="">ทุกแผนก</option>';
+        departments.forEach(dept => deptFilter.add(new Option(dept, dept)));
+        
+        const activityFilter = document.getElementById('activityFilter');
+        activityFilter.innerHTML = '<option value="">ทุกกิจกรรม</option>';
+        activities.forEach(activity => activityFilter.add(new Option(activity, activity)));
+    }
+
+    function setupEventListeners() {
+         ['startDate', 'endDate', 'departmentFilter', 'activityFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                document.querySelectorAll('.date-preset-btn').forEach(btn => btn.classList.remove('active'));
+                applyFiltersAndRender();
+            });
+        });
+    }
+
+    function setDateRangePreset(days) {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - (days - 1));
+        startDate.setHours(0, 0, 0, 0);
+
+        if(days === 0) {
+          startDate.setDate(today.getDate());
         }
-    </script>
+
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        
+        document.querySelectorAll('.date-preset-btn').forEach((btn, index) => {
+            const presetDays = [0, 7, 30, 90, 365];
+            if(presetDays[index] === days) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        applyFiltersAndRender();
+    }
+
+    function applyFiltersAndRender() {
+        const startDate = document.getElementById('startDate').valueAsDate;
+        const endDate = document.getElementById('endDate').valueAsDate;
+        if (endDate) endDate.setHours(23, 59, 59, 999);
+        
+        const department = document.getElementById('departmentFilter').value;
+        const activity = document.getElementById('activityFilter').value;
+
+        filteredData = allData.filter(item => {
+            return (!startDate || item.dataDate >= startDate) &&
+                   (!endDate || item.dataDate <= endDate) &&
+                   (!department || item.department === department) &&
+                   (!activity || item.activity === activity);
+        });
+        renderAll(filteredData);
+    }
+    
+    function renderAll(data) {
+        renderSummaryCards(data);
+        renderTable(data);
+        renderTrendChart(data);
+        renderActivityChart(data);
+    }
+    
+    function renderSummaryCards(data) {
+        const totalRecords = data.length;
+        const totalEmission = data.reduce((sum, item) => sum + item.co2e, 0);
+        
+        const dateRange = new Set(data.map(d => d.dataDate.toISOString().split('T')[0]));
+        const days = dateRange.size || 1;
+        const averageEmission = totalEmission / days;
+        
+        const deptEmissions = data.reduce((acc, item) => {
+            acc[item.department] = (acc[item.department] || 0) + item.co2e;
+            return acc;
+        }, {});
+        const topDepartment = Object.entries(deptEmissions).sort((a,b) => b[1] - a[1])[0];
+
+        document.getElementById('total-records').textContent = totalRecords.toLocaleString('th-TH');
+        document.getElementById('total-emission').textContent = totalEmission.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+        document.getElementById('average-emission').textContent = averageEmission.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+        document.getElementById('top-department').textContent = topDepartment ? topDepartment[0] : '-';
+    }
+    
+    function renderTable(data) {
+        const sortedData = [...data].sort((a, b) => {
+            const valA = a[sortState.key];
+            const valB = b[sortState.key];
+            let comparison = (valA > valB) ? 1 : (valA < valB) ? -1 : 0;
+            return sortState.direction === 'asc' ? comparison : -comparison;
+        });
+        updateSortIndicators();
+
+        const tableBody = document.getElementById('dataTableBody');
+        if (sortedData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-10">ไม่พบข้อมูล</td></tr>`;
+            return;
+        }
+        tableBody.innerHTML = sortedData.map(item => `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-sm text-gray-600">${item.dataDate.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric' })}</td>
+                <td class="px-6 py-4 text-sm text-gray-800 font-medium">${item.department}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">${item.activity}</td>
+                <td class="px-6 py-4 text-sm text-gray-800">${item.value.toLocaleString('th-TH')} ${item.unit}</td>
+                <td class="px-6 py-4 text-sm text-gray-800 font-bold">${item.co2e.toFixed(4)}</td>
+            </tr>`).join('');
+    }
+
+    function renderTrendChart(data) {
+        const aggregated = data.reduce((acc, item) => {
+            const dateKey = item.dataDate.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
+            acc[dateKey] = (acc[dateKey] || 0) + item.co2e;
+            return acc;
+        }, {});
+        
+        const chartData = [['วันที่', 'kgCO₂e']].concat(Object.entries(aggregated));
+
+        if (chartData.length <= 1) {
+            document.getElementById('trend_chart_div').innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">ข้อมูลไม่เพียงพอสำหรับแสดงกราฟแนวโน้ม</div>';
+            return;
+        }
+
+        const dataTable = google.visualization.arrayToDataTable(chartData);
+        const options = {
+            title: 'แนวโน้มการปล่อย CO₂e',
+            titleTextStyle: { color: '#334155', fontName: 'Sarabun', fontSize: 16, bold: false },
+            chartArea: {width: '85%', height: '75%'},
+            hAxis: { textStyle: { color: '#64748b', fontName: 'Sarabun', fontSize: 11 } },
+            vAxis: { title: 'kgCO₂e', format: 'short', textStyle: { color: '#64748b', fontName: 'Sarabun' } },
+            legend: { position: 'none' },
+            tooltip: { trigger: 'focus', textStyle: { fontName: 'Sarabun' } },
+            colors: [getComputedStyle(document.documentElement).getPropertyValue('--primary-green')],
+            animation: { startup: true, duration: 1000, easing: 'out' }
+        };
+        const chart = new google.visualization.ColumnChart(document.getElementById('trend_chart_div'));
+        chart.draw(dataTable, options);
+    }
+
+    function renderActivityChart(data) {
+        const aggregated = data.reduce((acc, item) => {
+            if (item.co2e > 0) {
+              acc[item.activity] = (acc[item.activity] || 0) + item.co2e;
+            }
+            return acc;
+        }, {});
+
+        const sorted = Object.entries(aggregated).sort((a,b) => b[1] - a[1]);
+        const chartData = [['กิจกรรม', 'kgCO₂e']].concat(sorted);
+        
+        if (chartData.length <= 1) {
+            document.getElementById('activity_chart_div').innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">ไม่มีข้อมูลสำหรับแสดงกราฟสัดส่วน</div>';
+            return;
+        }
+
+        const dataTable = google.visualization.arrayToDataTable(chartData);
+        const options = {
+            title: 'สัดส่วนการปล่อย CO₂e ตามกิจกรรม',
+            titleTextStyle: { color: '#334155', fontName: 'Sarabun', fontSize: 16, bold: false },
+            pieHole: 0.4,
+            chartArea: {width: '90%', height: '80%'},
+            legend: { position: 'bottom', textStyle: { color: '#475569', fontName: 'Sarabun' } },
+            tooltip: { textStyle: { fontName: 'Sarabun' } },
+            pieSliceTextStyle: { color: 'black' },
+            animation: { startup: true, duration: 1000, easing: 'out' }
+        };
+        const chart = new google.visualization.PieChart(document.getElementById('activity_chart_div'));
+        chart.draw(dataTable, options);
+    }
+    
+    function sortTableByColumn(key, thElement) {
+        sortState.key === key ? sortState.direction = (sortState.direction === 'asc' ? 'desc' : 'asc') : (sortState.key = key, sortState.direction = 'asc');
+        renderTable(filteredData);
+    }
+
+    function updateSortIndicators() {
+        document.querySelectorAll('th .sort-indicator').forEach(span => span.innerHTML = '');
+        const th = document.querySelector(`th[onclick*="'${sortState.key}'"] .sort-indicator`);
+        if (th) th.innerHTML = sortState.direction === 'asc' ? '▲' : '▼';
+    }
+
+    function exportToCSV() {
+        if (filteredData.length === 0) {
+          showToast("ไม่มีข้อมูลสำหรับส่งออก");
+          return;
+        }
+        const headers = "วันที่,แผนก,กิจกรรม,ปริมาณ,หน่วย,CO2e_kg";
+        const rows = filteredData.map(d => [
+            d.dataDate.toISOString().split('T')[0],
+            `"${d.department}"`, `"${d.activity}"`, d.value, d.unit, d.co2e.toFixed(4)
+        ].join(','));
+        
+        const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `carbon_footprint_export_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("ส่งออกข้อมูลสำเร็จ");
+    }
+    
+    function refreshData() {
+        showToast("กำลังรีเฟรชข้อมูล...");
+        fetchData();
+    }
+    
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    }
+
+</script>
 </body>
 </html>
