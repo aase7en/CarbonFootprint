@@ -1,8 +1,8 @@
 // File: Code.gs (FIXED)
 // AI by A: Backend script for Uthai Hospital's Carbon Footprint Data Collector
 
-const SHEET_ID = "17mCv54VhNlYh-N215TAnahll1trbKfy5Q0m_z7gVssA";
-const SHEET_NAME = "ฐานข้อมูล Carbon Footprint รพ.อุทัย"; 
+const SHEET_ID = "ใส่ Sheet ID ";
+const SHEET_NAME = "ใส่ชื่อชีต"; 
 
 /**
  * Main function to serve the web app.
@@ -12,13 +12,14 @@ function doGet(e) {
     return HtmlService.createTemplateFromFile('dashboard')
       .evaluate() 
       .setTitle("Dashboard | Carbon Footprint รพ.อุทัย")
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
-  
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle("ระบบบันทึกข้อมูล Carbon Footprint รพ.อุทัย")
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 /**
