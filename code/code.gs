@@ -1,8 +1,8 @@
 // File: Code.gs (FIXED)
 // AI by A: Backend script for Uthai Hospital's Carbon Footprint Data Collector
 
-const SHEET_ID = "ใส่ Sheet ID ";
-const SHEET_NAME = "ใส่ชื่อชีต"; 
+const SHEET_ID = "17mCv54VhNlYh-N215TAnahll1trbKfy5Q0m_z7gVssA";
+const SHEET_NAME = "ฐานข้อมูล Carbon Footprint รพ.อุทัย"; 
 
 /**
  * Main function to serve the web app.
