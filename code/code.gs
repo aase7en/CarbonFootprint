@@ -1,29 +1,24 @@
-// File: Code.gs (FIXED)
+// File: Code.gs (Updated for Single-Page Application)
 // AI by A: Backend script for Uthai Hospital's Carbon Footprint Data Collector
 
 const SHEET_ID = "17mCv54VhNlYh-N215TAnahll1trbKfy5Q0m_z7gVssA";
 const SHEET_NAME = "ฐานข้อมูล Carbon Footprint รพ.อุทัย"; 
 
 /**
- * Main function to serve the web app.
+ * Main function to serve the single-page web app.
+ * It will always render the 'application.html' file.
  */
 function doGet(e) {
-  if (e.parameter.page === 'dashboard') {
-    return HtmlService.createTemplateFromFile('dashboard')
-      .evaluate() 
-      .setTitle("Dashboard | Carbon Footprint รพ.อุทัย")
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  }
-  return HtmlService.createTemplateFromFile('index')
-    .evaluate()
-    .setTitle("ระบบบันทึกข้อมูล Carbon Footprint รพ.อุทัย")
+  return HtmlService.createTemplateFromFile('application') 
+    .evaluate() 
+    .setTitle("Carbon Footprint | รพ.อุทัย")
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 /**
  * Saves form data to the specified Google Sheet.
+ * This function is called from the client-side JavaScript.
  */
 function saveData(data) {
   try {
@@ -34,7 +29,6 @@ function saveData(data) {
     const dataDate = data.dataDate;
     const department = data.department;
 
-    // Append rows for each activity with data
     if (data.electricity > 0) sheet.appendRow([timestamp, dataDate, department, "การใช้ไฟฟ้า", data.electricity, "kWh"]);
     if (data.water > 0) sheet.appendRow([timestamp, dataDate, department, "การใช้น้ำประปาส่วนภูมิภาค", data.water, "ลูกบาศก์เมตร"]);
     if (data.paper > 0) sheet.appendRow([timestamp, dataDate, department, "การใช้กระดาษ A4", data.paper, "รีม"]);
@@ -56,6 +50,7 @@ function saveData(data) {
 
 /**
  * Fetches and formats all data from the Google Sheet for the dashboard.
+ * This function is called from the client-side JavaScript.
  */
 function getSheetData() {
   try {
@@ -63,7 +58,7 @@ function getSheetData() {
     const sheet = ss.getSheetByName(SHEET_NAME);
     
     if (!sheet) {
-      throw new Error("Sheet '" + SHEET_NAME + "' not found. Please check the SHEET_NAME variable.");
+      throw new Error("Sheet '" + SHEET_NAME + "' not found.");
     }
     
     if (sheet.getLastRow() < 2) return [];
@@ -71,7 +66,7 @@ function getSheetData() {
     const dataRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, 6);
     const data = dataRange.getValues();
 
-    const formattedData = data.map(row => {
+    return data.map(row => {
       if (!row || row.length < 6) return null;
       if (row[1] instanceof Date) {
         row[1] = Utilities.formatDate(row[1], Session.getScriptTimeZone(), 'yyyy-MM-dd');
@@ -81,10 +76,9 @@ function getSheetData() {
       }
       return row;
     }).filter(row => row !== null);
-
-    return formattedData;
   } catch (e) {
     console.error("getSheetData Error: " + e.toString());
     return { error: true, message: e.toString() };
   }
 }
+
