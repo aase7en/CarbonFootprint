@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Footprint | รพ.อุทัย</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      /* --- General Styles --- */
+      :root {
+        --primary-green: #005A31;
+        --secondary-green: #4CAF50;
+        --primary-blue: #007bff;
+        --light-gray: #f8fafc;
+        --text-dark: #334155;
+        --border-color: #e5e7eb;
+      }
+      body {
+        font-family: 'Sarabun', sans-serif;
+        background-color: var(--light-gray);
+        color: var(--text-dark);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .font-inter { font-family: 'Inter', sans-serif; }
+      .g-chart-tooltip {
+        font-family: 'Sarabun', sans-serif !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        border: none !important;
+        background-color: white !important;
+        padding: 12px !important;
+      }
+      /* --- Reusable Animated Border Effect --- */
+      @property --angle {
+        syntax: '<angle>';
+        inherits: false;
+        initial-value: 0deg;
+      }
+
+      @keyframes animate-snake-border {
+        0% { --angle: 0deg; }
+        100% { --angle: 360deg; }
+      }
+
+      .animated-border-effect {
+        position: relative;
+        z-index: 1;
+        /* border-radius is inherited from the element */
+        background: conic-gradient(
+          from var(--angle),
+          transparent 0%,
+          #34d399 15%, #3b82f6, #60a5fa, #a78bfa, #f472b6, #fbbf24, #34d399 70%,
+          transparent 85%
+        );
+        animation: animate-snake-border 6s linear infinite;
+      }
+
+      .animated-border-effect::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        bottom: 2px;
+        background-color: white;
+        z-index: -1;
+        transition: background-color 0.3s ease;
+        /* border-radius is inherited from the element's specific style */
+      }
+
+      /* --- Specific Styling for Animated Refresh Button --- */
+      .animated-refresh-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .animated-refresh-btn::before {
+        border-radius: 0.375rem;
+      }
+      .animated-refresh-btn:hover::before {
+        background-color: #f9fafb;
+      }
+      
+      /* --- Specific Styling for Date Preset Buttons --- */
+      #page-dashboard .date-preset-btn {
+          padding: 0.375rem 0.75rem;
+          font-size: 0.875rem;
+          border-radius: 9999px;
+          transition: all 0.2s ease;
+          border: none;
+          background-color: #f3f4f6;
+          color: #374151;
+          cursor: pointer;
+      }
+
+      /* --- Page-specific Styles for Data Entry Form --- */
+      #page-form .form-container { 
+        width: 100%;
+        background: white; 
+        padding: 25px;
+        border-radius: 12px; 
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08); 
+      }
+      #page-form .form-header h2 { 
+        color: var(--primary-green); 
+        font-size: 1.6em; 
+        margin: 0;
+      }
+
+      /* style for form labels */
+      #page-form .form-container form label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #374151;
+      }
+
+      /* style for form inputs background */
+      #page-form .form-container form input[type="date"],
+      #page-form .form-container form select,
+      #page-form .input-group input[type="number"] {
+        background-color: #f2f2f2; /* A very light gray to make them stand out */
+      }
+      #page-form .activity-btn { 
+        background-color: var(--secondary-green); color: white; padding: 12px 16px; border: none; cursor: pointer; border-radius: 8px; font-size: 1em; 
+        font-family: 'Sarabun', sans-serif; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.15); width: 100%; text-align: left;
+      }
+      #page-form .activity-btn:hover { background-color: #45a049; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+      #page-form .activity-btn.active { background-color: #00796b; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(0); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+      #page-form .sub-btn-group { display: none; flex-direction: column; gap: 8px; padding: 15px; background-color: #fdfdfd; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; }
+      #page-form .sub-activity-item button { background: #e8f5e9; border: 1px solid var(--secondary-green); color: var(--primary-green); font-weight: bold; font-size: 0.9em; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all 0.3s ease; width: 100%; text-align: left; }
+      #page-form .sub-activity-item button:hover { background: #c8e6c9; }
+      #page-form .sub-activity-item button.active { background: var(--primary-green); color: white; border-color: var(--primary-green); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+      #page-form .input-group { display: none; padding: 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; background-color: #fafcfa; }
+      #page-form .submit-btn { background-color: #007bff; color: white; padding: 14px 20px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1.2em; margin-top: 20px; font-family: 'Sarabun', sans-serif; transition: background-color 0.3s; }
+      #page-form .submit-btn:hover { background-color: #0069d9; }
+      #page-form .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;}
+      #page-form .modal-content { background-color: #fefefe; padding: 30px; border-radius: 10px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; }
+      #page-form .spinner { border: 8px solid #f3f3f3; border-top: 8px solid var(--secondary-green); border-radius: 50%; width: 60px; height: 60px; animation: spin 1.5s linear infinite; margin: 0 auto 20px auto; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      .co2-graphic { width: 120px; height: 100px; margin: 0 auto 15px auto; position: relative; }
+      .co2-graphic .co2-cloud { fill: #a0aec0; transition: all 0.5s ease-in-out; animation: fadeOutAndShrink 1s ease-in-out 0.5s forwards; }
+      .co2-graphic .leaf { fill: #48bb78; stroke: #2f855a; stroke-width: 2; transform-origin: 50% 100%; opacity: 0; animation: growIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s forwards; }
+      @keyframes fadeOutAndShrink { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.1); } }
+      @keyframes growIn { 0% { opacity: 0; transform: scale(0.2); } 100% { opacity: 1; transform: scale(1); } }
+
+
+      /* --- Modal Styles --- */
+      #page-form .modal-close-btn {
+        background-color: var(--secondary-green);
+        color: white;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1em;
+        margin-top: 15px;
+        font-weight: 600;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+      }
+      #page-form .modal-close-btn:hover {
+        background-color: #45a049; /* Darker green */
+        transform: translateY(-2px);
+      }
+      #page-form #alert-modal {
+        border-top: 5px solid #ffc107;
+      }
+      #page-form #alert-modal h3 {
+        color: #dc3545;
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      #page-form #alert-modal .alert-icon {
+        font-size: 3.5em;
+        color: #ffc107;
+        margin-bottom: 15px;
+        line-height: 1;
+      }
+      #page-form .alert-close-btn {
+        background-color: #ffc107; /* Yellow background */
+        color: #333; /* Dark text for contrast */
+      }
+      #page-form .alert-close-btn:hover {
+        background-color: #e0a800; /* Darker yellow on hover */
+      }
+    </style>
+</head>
+<body>
+
+    <!-- App Loading Screen -->
+    <div id="loading" class="flex items-center justify-center min-h-screen">
+        <div class="text-center">
+            <svg class="animate-spin h-10 w-10 text-green-700 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="text-lg font-semibold text-gray-600">กำลังเตรียมแอปพลิเคชัน...</p>
+        </div>
+    </div>
+
+    <!-- Main Application Layout -->
+    <div id="app" class="hidden relative min-h-screen md:flex">
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="bg-gray-900 text-white w-64 flex-shrink-0 flex flex-col fixed inset-y-0 left-0 z-30 transform md:relative md:translate-x-0 -translate-x-full transition-all duration-300">
+            <div class="flex items-center justify-between px-4 h-16 border-b border-gray-700">
+                <div class="flex items-center"><svg class="w-8 h-8 text-green-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg><span id="logo-text" class="font-bold text-lg ml-2 whitespace-nowrap">CarbonTrack</span></div>
+                <button id="sidebar-toggle" class="p-1 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-white hidden md:block"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg></button>
+            </div>
+            <nav class="flex-1 px-2 py-4 space-y-2">
+                <a href="#" id="nav-form" data-page="page-form" class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg"><svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg><span class="nav-text ml-3">บันทึกข้อมูล</span></a>
+                <a href="#" id="nav-dashboard" data-page="page-dashboard" class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg"><svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg><span class="nav-text ml-3">Dashboard</span></a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-400 rounded-lg cursor-not-allowed"><svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-1.621-1.621A3 3 0 0113.5 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h4.5M12 3v13.5" /></svg><span class="nav-text ml-3">รายงาน (เร็วๆ นี้)</span></a>
+            </nav>
+            <div class="px-4 py-2 mt-auto border-t border-gray-700 text-xs text-center text-gray-400">
+                <div class="nav-text">
+                    <p>งานอนามัยสิ่งแวดล้อมและอาชีวอนามัย</p>
+                    <p>รพ.อุทัย จ.พระนครศรีอยุธยา</p>
+                    <p>© 2024 <a href="https://github.com/aase7en" target="_blank" rel="noopener noreferrer" class="underline hover:text-white">Suppasit</a></p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 h-screen overflow-y-auto">
+            <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-between px-4 md:px-6 h-16"><button id="menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button><div class="flex-1"><h1 id="page-title" class="text-xl font-semibold text-gray-800 font-inter">บันทึกข้อมูล</h1></div>
+            <button onclick="refreshData()" class="animated-refresh-btn animated-border-effect">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M20 4l-4 4M4 20l4-4" /></svg>
+                <span>รีเฟรช</span>
+            </button>
+            </header>
+            
+            <main class="p-4 md:p-6 lg:p-8">
+                <!-- Page 1: Data Entry Form Content -->
+                <div id="page-form" class="page-content">
+                    <div class="form-container">
+                        <div class="form-header"><h2>ระบบบันทึกข้อมูล Carbon Footprint รพ.อุทัย</h2></div>
+                        <p class="mt-4 text-gray-600">เรียน ผู้ปฏิบัติงาน, กรุณาเลือกวันที่และแผนก จากนั้นเลือกกิจกรรมที่ต้องการบันทึกข้อมูล</p>
+                        <form id="dataForm" onsubmit="event.preventDefault(); submitForm();" class="mt-6">
+                            <label for="dataDate">เลือกวันที่ของข้อมูลที่ต้องการบันทึก:</label><input type="date" id="dataDate" name="dataDate" required class="mt-1 mb-4 w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            <label for="department">กรุณาเลือกแผนก/กลุ่มงาน:</label><select id="department" name="department" required class="mt-1 mb-4 w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><option value="">-- เลือกแผนก --</option><option value="กลุ่มงานบริหารทั่วไป">กลุ่มงานบริหารทั่วไป</option><option value="กลุ่มการพยาบาล">กลุ่มการพยาบาล</option><option value="กลุ่มงานผู้ป่วยนอก">กลุ่มงานผู้ป่วยนอก</option><option value="กลุ่มงานผู้ป่วยใน">กลุ่มงานผู้ป่วยใน</option><option value="กลุ่มงานทันตกรรม">กลุ่มงานทันตกรรม</option><option value="กลุ่มงานเภสัชกรรม">กลุ่มงานเภสัชกรรม</option><option value="กลุ่มงานบริการด้านปฐมภูมิและองค์รวม">กลุ่มงานบริการด้านปฐมภูมิและองค์รวม</option><option value="งานซ่อมบำรุง">งานซ่อมบำรุง</option><option value="งานยานพาหนะ">งานยานพาหนะ</option><option value="งานโภชนาการ">งานโภชนาการ</option></select>
+                            <p><strong>เลือกประเภทข้อมูลที่ต้องการบันทึก:</strong></p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div class="activity-item"><button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้ไฟฟ้า</button><div class="input-group" id="electricityDiv"><label for="electricity">ปริมาณการใช้ไฟฟ้า (kWh/Unit)</label><input type="number" step="0.01" id="electricity" name="electricity" placeholder="เช่น 1500.50"></div></div>
+                                <div class="activity-item"><button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้น้ำประปา</button><div class="input-group" id="waterDiv"><label for="water">ปริมาณการใช้น้ำประปาส่วนภูมิภาค (ลูกบาศก์เมตร)</label><input type="number" step="0.01" id="water" name="water" placeholder="เช่น 80.25"></div></div>
+                                <div class="activity-item"><button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้กระดาษ</button><div class="input-group" id="paperDiv"><label for="paper">ปริมาณการใช้กระดาษ A4 (รีม)</label><input type="number" step="1" id="paper" name="paper" placeholder="เช่น 10"></div></div>
+                                <div class="activity-item"><button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้ก๊าซหุงต้ม</button><div class="input-group" id="gasLpgDiv"><label for="gasLpg">การใช้ก๊าซหุงต้ม (กิโลกรัม)</label><input type="number" step="0.01" id="gasLpg" name="gasLpg" placeholder="เช่น 15.5"></div></div>
+                                <div class="activity-item"><button type="button" class="activity-btn" onclick="handleActivityClick(this)">การทิ้งขยะ</button><div class="sub-btn-group" id="wasteSubMenu"><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">ขยะติดเชื้อ</button><div class="input-group" id="infectiousWasteDiv"><label for="infectiousWaste">น้ำหนักขยะติดเชื้อที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="infectiousWaste" name="infectiousWaste" placeholder="เช่น 55.50"></div></div><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">ขยะทั่วไป</button><div class="input-group" id="generalWasteDiv"><label for="generalWaste">น้ำหนักขยะทั่วไปที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="generalWaste" name="generalWaste" placeholder="เช่น 250.75"></div></div><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">ขยะอินทรีย์</button><div class="input-group" id="organicWasteDiv"><label for="organicWaste">น้ำหนักขยะอินทรีย์ที่ส่งกำจัด (กิโลกรัม)</label><input type="number" step="0.01" id="organicWaste" name="organicWaste" placeholder="เช่น 120.00"></div></div></div></div>
+                                <div class="activity-item"><button type="button" class="activity-btn" onclick="handleActivityClick(this)">การใช้น้ำมัน</button><div class="sub-btn-group" id="oilSubMenu"><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">ดีเซล (ยานพาหนะ)</button><div class="input-group" id="dieselVehicleDiv"><label for="dieselVehicle">ปริมาณดีเซล - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="dieselVehicle" name="dieselVehicle" placeholder="เช่น 120.50"></div></div><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">ดีเซล (เครื่องจักร)</button><div class="input-group" id="dieselMachineDiv"><label for="dieselMachine">ปริมาณดีเซล - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="dieselMachine" name="dieselMachine" placeholder="เช่น 150.00"></div></div><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">เบนซิน (ยานพาหนะ)</button><div class="input-group" id="benzinVehicleDiv"><label for="benzinVehicle">ปริมาณเบนซิน - ยานพาหนะ (ลิตร)</label><input type="number" step="0.01" id="benzinVehicle" name="benzinVehicle" placeholder="เช่น 100.25"></div></div><div class="sub-activity-item"><button type="button" onclick="handleActivityClick(this)">เบนซิน (เครื่องจักร)</button><div class="input-group" id="benzinMachineDiv"><label for="benzinMachine">ปริมาณเบนซิน - เครื่องจักร (ลิตร)</label><input type="number" step="0.01" id="benzinMachine" name="benzinMachine" placeholder="เช่น 50.00"></div></div></div></div>
+                            </div>
+                            <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
+                        </form>
+                    </div>
+                    <div id="form-modal-overlay" class="modal-overlay"><div id="loading-modal" class="modal-content"><div class="spinner"></div><h3>กำลังบันทึกข้อมูล...</h3><p>กรุณารอสักครู่</p></div><div id="success-modal" class="modal-content"><div class="co2-graphic"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g class="co2-cloud"><circle cx="35" cy="65" r="15"/><circle cx="55" cy="60" r="20"/><circle cx="75" cy="65" r="15"/><text x="55" y="70" font-family="Arial, sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold">CO₂</text></g><path class="leaf" d="M 50,95 C 20,80 20,40 50,10 C 80,40 80,80 50,95 Z" /><line class="leaf" x1="50" y1="95" x2="50" y2="40" stroke-linecap="round"/></svg></div><h3>คุณคือส่วนหนึ่ง ที่ทำให้โลกดีขึ้น!</h3><p>ข้อมูลของท่านถูกบันทึกเรียบร้อย</p><button class="modal-close-btn" onclick="closeModal()">ยอดเยี่ยม</button></div><div id="alert-modal" class="modal-content"><div class="alert-icon">⚠️</div><h3>ข้อมูลไม่สมบูรณ์</h3><p id="alert-message"></p><button class="modal-close-btn alert-close-btn" onclick="closeModal()">รับทราบ</button></div></div>
+                </div>
+
+                <!-- Page 2: Dashboard Content -->
+                <div id="page-dashboard" class="page-content hidden">
+                    <section class="mb-6 p-5 bg-white rounded-xl shadow-md"><h2 class="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>ตัวกรองข้อมูล</h2><div class="space-y-4"><div class="flex flex-wrap items-center gap-2"><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(0)">วันนี้</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(7)">7 วัน</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors active" onclick="setDateRangePreset(30)">30 วัน</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(90)">90 วัน</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(365)">1 ปี</button></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"><input type="date" id="startDate" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><input type="date" id="endDate" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><select id="departmentFilter" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><option value="">ทุกแผนก</option></select><select id="activityFilter" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><option value="">ทุกกิจกรรม</option></select></div></div></section>
+                    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500"><h4 class="text-sm font-medium text-gray-500">จำนวนรายการทั้งหมด</h4><p id="total-records" class="text-3xl font-bold text-gray-800">0</p></div><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-green-500"><h4 class="text-sm font-medium text-gray-500">ปริมาณการปล่อยรวม</h4><p id="total-emission" class="text-3xl font-bold text-gray-800">0</p><span class="text-sm text-gray-500">kgCO₂e</span></div><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-yellow-500"><h4 class="text-sm font-medium text-gray-500">เฉลี่ยต่อวัน</h4><p id="average-emission" class="text-3xl font-bold text-gray-800">0</p><span class="text-sm text-gray-500">kgCO₂e</span></div><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-purple-500"><h4 class="text-sm font-medium text-gray-500">แผนกที่ปล่อยสูงสุด</h4><p id="top-department" class="text-xl font-bold text-gray-800">-</p></div></section>
+                    <section class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6"><div class="lg:col-span-3 bg-white p-5 rounded-xl shadow-md"><div id="trend_chart_div" class="w-full h-96"></div></div><div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-md"><div id="activity_chart_div" class="w-full h-96"></div></div></section>
+                    <section class="bg-white rounded-xl shadow-md overflow-hidden"><div class="flex justify-between items-center p-5 border-b border-gray-200"><h2 class="text-lg font-semibold text-gray-700">ข้อมูล Carbon Footprint</h2><button onclick="exportToCSV()" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>ส่งออก CSV</button></div><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('dataDate', this)">วันที่ข้อมูล <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('department', this)">แผนก <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('activity', this)">กิจกรรม <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('value', this)">ปริมาณ <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('co2e', this)">CO₂e (kg) <span class="sort-indicator"></span></th></tr></thead><tbody id="dataTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div></section>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="toast"></div>
+
+    <script>
+    // --- Global State ---
+    let allData = [];
+    let filteredData = [];
+    let isDataLoaded = false;
+    let sortState = { key: 'dataDate', direction: 'desc' };
+
+    const emissionFactors = {"การใช้ไฟฟ้า": 0.4984, "การใช้น้ำประปาส่วนภูมิภาค": 0.0003, "ใช้น้ำประปาส่วนภูมิภาค": 0.0003, "ขยะติดเชื้อ": 0.45, "ขยะทั่วไป": 0.584, "ขยะอินทรีย์": 0.584, "การใช้ก๊าซหุงต้ม": 3.0337, "การใช้น้ำมันดีเซลกับยานพาหนะ": 2.6938, "ปริมาณดีเซล - ยานพาหนะ": 2.6938, "การใช้น้ำมันเบนซินกับยานพาหนะ": 2.2968, "ปริมาณเบนซิน - ยานพาหนะ": 2.2968, "การใช้น้ำมันดีเซลกับเครื่องจักร": 2.6938, "ปริมาณดีเซล - เครื่องจักร": 2.6938, "การใช้น้ำมันเบนซินกับเครื่องจักร": 2.2968, "ปริมาณเบนซิน - เครื่องจักร": 2.2968, "การใช้กระดาษ A4": 1.8375, "ปริมาณการใช้กระดาษ A4": 1.8375, "การใช้กระดาษ A5": 0.9187, "ปริมาณการใช้กระดาษ A5": 0.9187, "การใช้สารเคมี คลอรีน": 1.4, "การใช้สารเคมี-คลอรีน": 1.4, "การใช้หมึกพิมพ์": 3.0, "การใช้หมึก": 3.0 };
+    const activityNameMap = {"ใช้น้ำประปาส่วนภูมิภาค": "การใช้น้ำประปาส่วนภูมิภาค", "ปริมาณดีเซล - ยานพาหนะ": "การใช้น้ำมันดีเซลกับยานพาหนะ", "ปริมาณเบนซิน - ยานพาหนะ": "การใช้น้ำมันเบนซินกับยานพาหนะ", "ปริมาณดีเซล - เครื่องจักร": "การใช้น้ำมันดีเซลกับเครื่องจักร", "ปริมาณเบนซิน - เครื่องจักร": "การใช้น้ำมันเบนซินกับเครื่องจักร", "ปริมาณการใช้กระดาษ A4": "การใช้กระดาษ A4", "ปริมาณการใช้กระดาษ A5": "การใช้กระดาษ A5", "การใช้สารเคมี-คลอรีน": "การใช้สารเคมี คลอรีน", "การใช้หมึก": "การใช้หมึกพิมพ์"};
+    
+    // --- MAIN INITIALIZATION ---
+    document.addEventListener("DOMContentLoaded", () => {
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(() => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+        });
+        
+        setupNavigation();
+        setupMobileMenu();
+        setupSidebarToggle();
+    });
+
+    // --- NAVIGATION LOGIC ---
+    function setupNavigation() {
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page-content');
+        const pageTitle = document.getElementById('page-title');
+        const navForm = document.getElementById('nav-form');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetPageId = link.getAttribute('data-page');
+                const targetPage = document.getElementById(targetPageId);
+
+                if (targetPage) {
+                    pages.forEach(page => page.classList.add('hidden'));
+                    targetPage.classList.remove('hidden');
+
+                    navLinks.forEach(l => {
+                        l.classList.remove('bg-gray-700', 'text-white');
+                        l.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+                    });
+                    link.classList.add('bg-gray-700', 'text-white');
+                    link.classList.remove('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+
+                    // Update header title
+                    pageTitle.textContent = link.querySelector('.nav-text').textContent;
+                    
+                    if (targetPageId === 'page-dashboard' && !isDataLoaded) {
+                        fetchData();
+                    } else if (targetPageId === 'page-form') {
+                        resetFormToInitialState();
+                    }
+                }
+            });
+        });
+        // Set initial page to the form
+        if(navForm) navForm.click();
+    }
+    
+    // --- DASHBOARD FUNCTIONS ---
+    function fetchData() {
+        isDataLoaded = true; 
+        document.getElementById('page-dashboard').innerHTML = `<div class="flex items-center justify-center min-h-[50vh]"><svg class="animate-spin h-8 w-8 text-green-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="ml-3 text-lg">กำลังโหลดข้อมูลแดชบอร์ด...</p></div>`;
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run.withSuccessHandler(dataLoaded).getSheetData();
+        } else {
+            console.warn("Running in PREVIEW mode. Cannot fetch live data.");
+            document.getElementById('page-dashboard').innerHTML = `<div class="text-center py-10"><h3 class="text-lg font-semibold text-gray-700">ไม่สามารถโหลดข้อมูลได้</h3><p class="text-gray-500">ฟังก์ชันนี้จะทำงานบนเว็บแอปที่ Deploy แล้วเท่านั้น</p></div>`;
+        }
+    }
+
+    function dataLoaded(dataFromServer) {
+        if (dataFromServer.error) {
+            document.getElementById('page-dashboard').innerHTML = `<p class="text-red-600 font-semibold text-center py-10">เกิดข้อผิดพลาด: ${dataFromServer.message}</p>`;
+            return;
+        }
+
+        allData = dataFromServer.map(row => {
+            const originalActivity = row[3] ? String(row[3]).trim() : '';
+            const value = parseFloat(row[4]) || 0;
+            const co2e = value * (emissionFactors[originalActivity] || 0);
+            const standardizedActivity = activityNameMap[originalActivity] || originalActivity;
+            
+            // FIX: Parse date string as UTC to avoid timezone issues
+            const dateParts = row[1].split('-');
+            const dataDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+
+            return { dataDate: dataDate, department: row[2], activity: standardizedActivity, value: value, unit: row[5], co2e: co2e };
+        }).filter(item => item.department && item.activity);
+        
+        initializeDashboard();
+    }
+
+    function initializeDashboard() {
+        const originalDashboardHTML = `
+            <section class="mb-6 p-5 bg-white rounded-xl shadow-md"><h2 class="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>ตัวกรองข้อมูล</h2><div class="space-y-4"><div class="flex flex-wrap items-center gap-2"><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(0)">วันนี้</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(7)">7 วัน</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors active" onclick="setDateRangePreset(30)">30 วัน</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(90)">90 วัน</button><button class="date-preset-btn px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" onclick="setDateRangePreset(365)">1 ปี</button></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"><input type="date" id="startDate" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><input type="date" id="endDate" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><select id="departmentFilter" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><option value="">ทุกแผนก</option></select><select id="activityFilter" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"><option value="">ทุกกิจกรรม</option></select></div></div></section>
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500"><h4 class="text-sm font-medium text-gray-500">จำนวนรายการทั้งหมด</h4><p id="total-records" class="text-3xl font-bold text-gray-800">0</p></div><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-green-500"><h4 class="text-sm font-medium text-gray-500">ปริมาณการปล่อยรวม</h4><p id="total-emission" class="text-3xl font-bold text-gray-800">0</p><span class="text-sm text-gray-500">kgCO₂e</span></div><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-yellow-500"><h4 class="text-sm font-medium text-gray-500">เฉลี่ยต่อวัน</h4><p id="average-emission" class="text-3xl font-bold text-gray-800">0</p><span class="text-sm text-gray-500">kgCO₂e</span></div><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-purple-500"><h4 class="text-sm font-medium text-gray-500">แผนกที่ปล่อยสูงสุด</h4><p id="top-department" class="text-xl font-bold text-gray-800">-</p></div></section>
+            <section class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6"><div class="lg:col-span-3 bg-white p-5 rounded-xl shadow-md"><div id="trend_chart_div" class="w-full h-96"></div></div><div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-md"><div id="activity_chart_div" class="w-full h-96"></div></div></section>
+            <section class="bg-white rounded-xl shadow-md overflow-hidden"><div class="flex justify-between items-center p-5 border-b border-gray-200"><h2 class="text-lg font-semibold text-gray-700">ข้อมูล Carbon Footprint</h2><button onclick="exportToCSV()" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>ส่งออก CSV</button></div><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('dataDate', this)">วันที่ข้อมูล <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('department', this)">แผนก <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('activity', this)">กิจกรรม <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('value', this)">ปริมาณ <span class="sort-indicator"></span></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTableByColumn('co2e', this)">CO₂e (kg) <span class="sort-indicator"></span></th></tr></thead><tbody id="dataTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div></section>
+        `;
+        document.getElementById('page-dashboard').innerHTML = originalDashboardHTML;
+        populateFilters();
+        setupDashboardEventListeners();
+        setDateRangePreset(30);
+    }
+
+    function populateFilters() { const departments = [...new Set(allData.map(item => item.department))].sort((a,b) => a.localeCompare(b, 'th')); const activities = [...new Set(allData.map(item => item.activity))].sort((a,b) => a.localeCompare(b, 'th')); const deptFilter = document.getElementById('departmentFilter'); deptFilter.innerHTML = '<option value="">ทุกแผนก</option>'; departments.forEach(dept => deptFilter.add(new Option(dept, dept))); const activityFilter = document.getElementById('activityFilter'); activityFilter.innerHTML = '<option value="">ทุกกิจกรรม</option>'; activities.forEach(activity => activityFilter.add(new Option(activity, activity))); }
+    
+    function setupDashboardEventListeners() { ['startDate', 'endDate', 'departmentFilter', 'activityFilter'].forEach(id => { document.getElementById(id).addEventListener('change', () => { document.querySelectorAll('.date-preset-btn').forEach(btn => btn.classList.remove('active')); applyFiltersAndRender(); }); }); }
+    
+    function setDateRangePreset(days) { 
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); 
+        const startDate = new Date(today); 
+        startDate.setDate(today.getDate() - (days - 1)); 
+        startDate.setHours(0, 0, 0, 0); 
+        if(days === 0) { startDate.setDate(today.getDate()); } 
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0]; 
+        document.getElementById('endDate').value = today.toISOString().split('T')[0]; 
+        
+        document.querySelectorAll('.date-preset-btn').forEach((btn, index) => { 
+            const presetDays = [0, 7, 30, 90, 365]; 
+            btn.classList.remove('active', 'animated-border-effect');
+            if(presetDays[index] === days) {
+                btn.classList.add('active', 'animated-border-effect');
+            }
+        }); 
+        applyFiltersAndRender(); 
+    };
+
+    function applyFiltersAndRender() { 
+        // FIX: Read dates from input fields and parse them correctly as local time
+        const startDateString = document.getElementById('startDate').value;
+        const endDateString = document.getElementById('endDate').value;
+        
+        // Create Date objects representing the start of the selected day in the local timezone
+        const startDate = startDateString ? new Date(startDateString + 'T00:00:00') : null;
+        const endDate = endDateString ? new Date(endDateString + 'T23:59:59') : null;
+
+        const department = document.getElementById('departmentFilter').value; 
+        const activity = document.getElementById('activityFilter').value; 
+        
+        filteredData = allData.filter(item => { 
+            // The item.dataDate is already a Date object (in UTC)
+            return (!startDate || item.dataDate >= startDate) && 
+                   (!endDate || item.dataDate <= endDate) && 
+                   (!department || item.department === department) && 
+                   (!activity || item.activity === activity); 
+        }); 
+        
+        renderAll(filteredData); 
+    }
+
+    function renderAll(data) { renderSummaryCards(data); renderTable(data); renderTrendChart(data); renderActivityChart(data); }
+    
+    function renderSummaryCards(data) { const totalRecords = data.length; const totalEmission = data.reduce((sum, item) => sum + item.co2e, 0); const dateRange = new Set(data.map(d => d.dataDate.toISOString().split('T')[0])); const days = dateRange.size || 1; const averageEmission = totalEmission / days; const deptEmissions = data.reduce((acc, item) => { acc[item.department] = (acc[item.department] || 0) + item.co2e; return acc; }, {}); const topDepartment = Object.entries(deptEmissions).sort((a,b) => b[1] - a[1])[0]; document.getElementById('total-records').textContent = totalRecords.toLocaleString('th-TH'); document.getElementById('total-emission').textContent = totalEmission.toLocaleString('th-TH', { maximumFractionDigits: 2 }); document.getElementById('average-emission').textContent = averageEmission.toLocaleString('th-TH', { maximumFractionDigits: 2 }); document.getElementById('top-department').textContent = topDepartment ? topDepartment[0] : '-'; }
+    
+    function renderTable(data) { const sortedData = [...data].sort((a, b) => { const valA = a[sortState.key]; const valB = b[sortState.key]; let comparison = (valA > valB) ? 1 : (valA < valB) ? -1 : 0; return sortState.direction === 'asc' ? comparison : -comparison; }); updateSortIndicators(); const tableBody = document.getElementById('dataTableBody'); if (sortedData.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-10">ไม่พบข้อมูล</td></tr>`; return; } tableBody.innerHTML = sortedData.map(item => ` <tr class="hover:bg-gray-50 transition-colors"> <td class="px-6 py-4 text-sm text-gray-600">${item.dataDate.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', timeZone: 'UTC' })}</td> <td class="px-6 py-4 text-sm text-gray-800 font-medium">${item.department}</td> <td class="px-6 py-4 text-sm text-gray-600">${item.activity}</td> <td class="px-6 py-4 text-sm text-gray-800">${item.value.toLocaleString('th-TH')} ${item.unit}</td> <td class="px-6 py-4 text-sm text-gray-800 font-bold">${item.co2e.toFixed(4)}</td> </tr>`).join(''); }
+    
+    function renderTrendChart(data) { const aggregated = data.reduce((acc, item) => { const dateKey = item.dataDate.toLocaleDateString('th-TH', { month: 'short', day: 'numeric', timeZone: 'UTC' }); acc[dateKey] = (acc[dateKey] || 0) + item.co2e; return acc; }, {}); const chartData = [['วันที่', 'kgCO₂e']].concat(Object.entries(aggregated)); if (chartData.length <= 1) { document.getElementById('trend_chart_div').innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">ข้อมูลไม่เพียงพอสำหรับแสดงกราฟแนวโน้ม</div>'; return; } const dataTable = google.visualization.arrayToDataTable(chartData); const options = { title: 'แนวโน้มการปล่อย CO₂e', titleTextStyle: { color: '#334155', fontName: 'Sarabun', fontSize: 16, bold: false }, chartArea: {width: '85%', height: '75%'}, hAxis: { textStyle: { color: '#64748b', fontName: 'Sarabun', fontSize: 11 } }, vAxis: { title: 'kgCO₂e', format: 'short', textStyle: { color: '#64748b', fontName: 'Sarabun' } }, legend: { position: 'none' }, tooltip: { trigger: 'focus', textStyle: { fontName: 'Sarabun' } }, colors: [getComputedStyle(document.documentElement).getPropertyValue('--primary-green')], animation: { startup: true, duration: 1000, easing: 'out' } }; const chart = new google.visualization.ColumnChart(document.getElementById('trend_chart_div')); chart.draw(dataTable, options); }
+    
+    function renderActivityChart(data) { const aggregated = data.reduce((acc, item) => { if (item.co2e > 0) { acc[item.activity] = (acc[item.activity] || 0) + item.co2e; } return acc; }, {}); const sorted = Object.entries(aggregated).sort((a,b) => b[1] - a[1]); const chartData = [['กิจกรรม', 'kgCO₂e']].concat(sorted); if (chartData.length <= 1) { document.getElementById('activity_chart_div').innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">ไม่มีข้อมูลสำหรับแสดงกราฟสัดส่วน</div>'; return; } const dataTable = google.visualization.arrayToDataTable(chartData); const options = { title: 'สัดส่วนการปล่อย CO₂e ตามกิจกรรม', titleTextStyle: { color: '#334155', fontName: 'Sarabun', fontSize: 16, bold: false }, pieHole: 0.4, chartArea: {width: '90%', height: '80%'}, legend: { position: 'bottom', textStyle: { color: '#475569', fontName: 'Sarabun' } }, tooltip: { textStyle: { fontName: 'Sarabun' } }, pieSliceTextStyle: { color: 'black' }, animation: { startup: true, duration: 1000, easing: 'out' } }; const chart = new google.visualization.PieChart(document.getElementById('activity_chart_div')); chart.draw(dataTable, options); }
+    
+    function sortTableByColumn(key, thElement) { sortState.key === key ? sortState.direction = (sortState.direction === 'asc' ? 'desc' : 'asc') : (sortState.key = key, sortState.direction = 'asc'); renderTable(filteredData); }
+    
+    function updateSortIndicators() { document.querySelectorAll('#page-dashboard th .sort-indicator').forEach(span => span.innerHTML = ''); const th = document.querySelector(`#page-dashboard th[onclick*="'${sortState.key}'"] .sort-indicator`); if (th) th.innerHTML = sortState.direction === 'asc' ? '▲' : '▼'; }
+    
+    function exportToCSV() { 
+        if (filteredData.length === 0) { 
+            showToast("ไม่มีข้อมูลสำหรับส่งออก"); 
+            return; 
+        } 
+        const headers = "วันที่,แผนก,กิจกรรม,ปริมาณ,หน่วย,CO2e_kg"; 
+        const rows = filteredData.map(d => [ d.dataDate.toISOString().split('T')[0], `"${d.department}"`, `"${d.activity}"`, d.value, d.unit, d.co2e.toFixed(4) ].join(','));
+        
+        const bom = "\uFEFF";
+        const csvContent = bom + headers + "\n" + rows.join("\n");
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `carbon_footprint_export_${new Date().toISOString().slice(0,10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast("ส่งออกข้อมูลสำเร็จ"); 
+    };
+    
+    function refreshData() {
+        const currentPage = document.querySelector('.page-content:not(.hidden)').id;
+        if(currentPage === 'page-dashboard'){
+            showToast("กำลังรีเฟรชข้อมูล...");
+            fetchData();
+        } else {
+            showToast("รีเฟรชข้อมูลสำหรับหน้า Dashboard เท่านั้น");
+        }
+    }
+    
+    // --- FORM FUNCTIONS ---
+    function handleActivityClick(clickedButton) { const content = clickedButton.nextElementSibling; const isActive = clickedButton.classList.toggle('active'); content.style.display = isActive ? (content.classList.contains('sub-btn-group') ? 'flex' : 'block') : 'none'; if (!isActive && content.classList.contains('sub-btn-group')) { content.querySelectorAll('button').forEach(subBtn => subBtn.classList.remove('active')); content.querySelectorAll('.input-group').forEach(input => input.style.display = 'none'); } }
+    
+    function resetFormToInitialState() { document.getElementById('dataForm').reset(); document.querySelectorAll('#page-form .input-group, #page-form .sub-btn-group').forEach(div => div.style.display = 'none'); document.querySelectorAll('#page-form .activity-btn, #page-form .sub-activity-item button').forEach(btn => btn.classList.remove('active')); document.getElementById('dataDate').valueAsDate = new Date(); }
+    
+    function showAlert(message) { document.getElementById('alert-message').textContent = message; document.getElementById('form-modal-overlay').style.display = 'flex'; document.getElementById('alert-modal').style.display = 'block'; document.getElementById('loading-modal').style.display = 'none'; document.getElementById('success-modal').style.display = 'none'; }
+    
+    function submitForm() {
+        const dataDate = document.getElementById('dataDate').value;
+        const department = document.getElementById('department').value;
+        if (!dataDate) { showAlert("กรุณาระบุวันที่ของข้อมูลที่ต้องการบันทึก"); return; }
+        if (!department) { showAlert("กรุณาเลือกแผนกของท่าน"); return; }
+        const allNumberInputs = document.querySelectorAll('#page-form .input-group input[type="number"]');
+        let hasData = false;
+        for (const input of allNumberInputs) { if (input.offsetParent !== null && input.value && parseFloat(input.value) > 0) { hasData = true; break; } }
+        if (!hasData) { showAlert("กรุณาเลือกประเภทและกรอกข้อมูลที่ต้องการบันทึกอย่างน้อย 1 รายการ (ต้องมีค่ามากกว่า 0)"); return; }
+        const formData = { dataDate: dataDate, department: department, electricity: parseFloat(document.getElementById('electricity').value) || 0, water: parseFloat(document.getElementById('water').value) || 0, paper: parseFloat(document.getElementById('paper').value) || 0, gasLpg: parseFloat(document.getElementById('gasLpg').value) || 0, infectiousWaste: parseFloat(document.getElementById('infectiousWaste').value) || 0, generalWaste: parseFloat(document.getElementById('generalWaste').value) || 0, organicWaste: parseFloat(document.getElementById('organicWaste').value) || 0, dieselVehicle: parseFloat(document.getElementById('dieselVehicle').value) || 0, dieselMachine: parseFloat(document.getElementById('dieselMachine').value) || 0, benzinVehicle: parseFloat(document.getElementById('benzinVehicle').value) || 0, benzinMachine: parseFloat(document.getElementById('benzinMachine').value) || 0 };
+        
+        document.getElementById('form-modal-overlay').style.display = 'flex';
+        document.getElementById('loading-modal').style.display = 'block';
+        document.getElementById('alert-modal').style.display = 'none';
+        document.getElementById('success-modal').style.display = 'none';
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run
+                .withSuccessHandler(response => {
+                    document.getElementById('loading-modal').style.display = 'none';
+                    document.getElementById('success-modal').style.display = 'block';
+                    console.log(response);
+                })
+                .withFailureHandler(error => {
+                    document.getElementById('loading-modal').style.display = 'none';
+                    showAlert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+                    console.error(error);
+                })
+                .saveData(formData);
+        } else {
+            console.warn("Running in PREVIEW mode. Simulating form submission.");
+            setTimeout(() => {
+                document.getElementById('loading-modal').style.display = 'none';
+                document.getElementById('success-modal').style.display = 'block';
+            }, 1500);
+        }
+    }
+    
+    function closeModal() { document.getElementById('form-modal-overlay').style.display = 'none'; document.getElementById('success-modal').style.display = 'none'; document.getElementById('alert-modal').style.display = 'none'; document.getElementById('loading-modal').style.display = 'none'; resetFormToInitialState(); }
+    
+    // --- SHARED UI FUNCTIONS ---
+    function setupSidebarToggle() { const toggleBtn = document.getElementById('sidebar-toggle'); const sidebar = document.getElementById('sidebar'); const logoText = document.getElementById('logo-text'); const navTexts = document.querySelectorAll('.nav-text'); const toggleIcon = toggleBtn.querySelector('svg'); toggleBtn.addEventListener('click', () => { sidebar.classList.toggle('w-64'); sidebar.classList.toggle('w-20'); logoText.classList.toggle('hidden'); navTexts.forEach(text => { text.classList.toggle('hidden'); }); toggleIcon.classList.toggle('rotate-180'); }); }
+    
+    function setupMobileMenu() { const menuBtn = document.getElementById('menu-btn'); const sidebar = document.getElementById('sidebar'); menuBtn.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); }); }
+    
+    function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); }, 3000); }
+
+</script>
+</body>
+</html>
+
